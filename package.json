@@ -1,0 +1,39 @@
+{
+  "name": "ddd-boilerplate",
+  "version": "1.0.0",
+  "description": "Boilerplate for Domain Driven Design (DDD) in Typescript, Javascript",
+  "main": "dist/index.js",
+  "scripts": {
+    "example": "ts-node -r tsconfig-paths/register src/example/index",
+    "build": "npx tsc --project tsconfig.json && tsc-alias -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nqd881/ddd-boilerplate"
+  },
+  "author": "QuocDai",
+  "license": "ISC",
+  "keywords": [
+    "ddd",
+    "ddd-boilerplate",
+    "ddd-kit",
+    "ddd-base",
+    "ddd-foundation",
+    "ddd-ts",
+    "ddd-js"
+  ],
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "reflect-metadata": "^0.1.13",
+    "type-fest": "^4.3.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.198",
+    "@types/uuid": "^9.0.2",
+    "ts-node": "^10.9.1",
+    "tsc-alias": "^1.8.7",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.1.6"
+  }
+}
