@@ -2,7 +2,7 @@ import { Promisable } from 'type-fest';
 import { AnyAggregate } from './aggregate';
 
 export interface IRepoBase<AR extends AnyAggregate> {
-  findById(id: string): Promisable<AR>;
+  findById(id: string): Promisable<AR | null>;
 
   create(aggregates: AR | AR[]): Promisable<any>;
 
