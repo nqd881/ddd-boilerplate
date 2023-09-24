@@ -8,3 +8,5 @@ import { Class } from 'type-fest';
 
 export type DomainEventClass<T extends AnyDomainEvent> = Class<T, DomainEventConstructorParams<T>> &
   typeof DomainEvent<GetDomainEventProps<T>>;
+
+export type DomainEventClassWithProps<P> = DomainEventClass<DomainEvent<P>>;

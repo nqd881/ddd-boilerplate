@@ -1,5 +1,3 @@
-export * from './constants';
-
 export * from './aggregate-type';
 export * from './domain-event-type';
 export * from './entity-type';

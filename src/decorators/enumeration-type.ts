@@ -1,10 +1,13 @@
+import { AnyEnumeration } from '#core/enumeration';
+import { EnumerationMetadata } from '#metadata/enumeration.metadata';
 import { EnumerationClass } from '#types/enumeration.type';
 import 'reflect-metadata';
-import { ENUMERATION_TYPE } from './constants';
-import { AnyEnumeration } from '#core/enumeration';
 
-export const EnumerationType = <T extends AnyEnumeration>(enumerationType?: string) => {
+export const EnumerationType = <T extends AnyEnumeration>(enumType?: string) => {
   return <U extends EnumerationClass<T>>(target: U) => {
-    Reflect.defineMetadata(ENUMERATION_TYPE, enumerationType, target);
+    EnumerationMetadata.defineEnumerationMetadata(
+      target,
+      new EnumerationMetadata(enumType ?? target.name),
+    );
   };
 };

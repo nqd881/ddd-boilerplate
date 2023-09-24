@@ -1,30 +1,19 @@
-import { ValueObjectClass } from '#types/value-object.type';
+import { ValueObjectMetadata } from '#metadata/value-object.metadata';
+import { ValueObjectClassWithProps } from '#types/value-object.type';
 import _ from 'lodash';
-import { VALUE_OBJECT_TYPE } from 'src/decorators';
-import { Constructor } from 'type-fest';
+import { Class } from 'type-fest';
 
 export abstract class ValueObject<P> {
-  private readonly _type: string;
-  protected readonly _props: Readonly<P>;
+  protected readonly _props: P;
 
-  constructor(type: string, props: P) {
+  constructor(props: P) {
     this.validateProps(props);
 
-    this._type = type;
-    this._props = props;
+    this._props = ValueObject.cloneProps(props);
   }
 
-  static getValueObjectType<T extends AnyValueObject>(this: ValueObjectClass<T>) {
-    return Reflect.getMetadata(VALUE_OBJECT_TYPE, this) ?? this.name;
-  }
-
-  static initValueObject<T extends AnyValueObject>(
-    this: ValueObjectClass<T>,
-    props: GetValueObjectProps<T>,
-  ) {
-    const valueObjectType = this.getValueObjectType();
-
-    return new this(valueObjectType, props);
+  static cloneProps<P>(props: P) {
+    return _.cloneDeep(props);
   }
 
   static isValueObject(obj: any) {
@@ -33,9 +22,12 @@ export abstract class ValueObject<P> {
 
   abstract validateProps(props: P): void;
 
+  getValueObjectMetadata() {
+    return ValueObjectMetadata.getValueObjectMetadata(this.constructor as Class<ValueObject<P>>);
+  }
+
   equalsType(obj: ValueObject<P>) {
-    // return obj instanceof this.constructor;
-    return this.type === obj.type;
+    return obj instanceof this.constructor;
   }
 
   equals(obj: ValueObject<P>) {
@@ -43,27 +35,23 @@ export abstract class ValueObject<P> {
 
     if (!this.equalsType(obj)) return false;
 
-    return JSON.stringify(this.props) === JSON.stringify(obj.props);
+    return JSON.stringify(this.getProps()) === JSON.stringify(obj.getProps());
   }
 
-  cloneWith(props: Partial<P>) {
-    const clonedProps = _.cloneDeep(this.props);
+  cloneWith(props: Partial<P> = {}) {
+    const clonedProps = this.getProps();
 
-    return new (this.constructor as Constructor<ValueObject<P>>)(
-      _.merge(clonedProps, props),
-    ) as this;
+    const newProps = _.merge(clonedProps, props);
+
+    return new (this.constructor as ValueObjectClassWithProps<P>)(newProps) as this;
   }
 
   clone() {
-    return this.cloneWith({});
+    return this.cloneWith();
   }
 
-  get type() {
-    return this._type;
-  }
-
-  get props() {
-    return this._props;
+  getProps() {
+    return ValueObject.cloneProps(this._props);
   }
 }
 

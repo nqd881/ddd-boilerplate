@@ -1,10 +1,17 @@
-import { AnyEntity } from '#core/entity';
+import { AnyEntity, GetEntityProps } from '#core/entity';
+import { EntityMetadata } from '#metadata/entity.metadata';
 import { EntityClass } from '#types/entity.type';
-import { ENTITY_TYPE } from './constants';
 import 'reflect-metadata';
+import { Class } from 'type-fest';
 
-export const EntityType = <T extends AnyEntity>(entityType?: string) => {
+export const EntityType = <T extends AnyEntity>(
+  propsClass: Class<GetEntityProps<T>>,
+  entityType?: string,
+) => {
   return <U extends EntityClass<T>>(target: U) => {
-    Reflect.defineMetadata(ENTITY_TYPE, entityType, target);
+    EntityMetadata.defineEntityMetadata(
+      target,
+      new EntityMetadata(entityType ?? target.name, propsClass),
+    );
   };
 };

@@ -11,3 +11,5 @@ export type ValueObjectClass<T extends AnyValueObject> = Omit<
   'constructor'
 > &
   Class<T, ValueObjectConstructorParams<T>>;
+
+export type ValueObjectClassWithProps<P> = ValueObjectClass<ValueObject<P>>;

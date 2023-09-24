@@ -6,5 +6,5 @@ export type AccountCreatedEventProps = {
   username: string;
 };
 
-@DomainEventType('Account')
+@DomainEventType()
 export class AccountCreatedEvent extends DomainEvent<AccountCreatedEventProps> {}

@@ -1,67 +1,35 @@
+import { EntityMetadata } from '#metadata/entity.metadata';
 import { EntityClass } from '#types/entity.type';
+import { plainToInstance } from 'class-transformer';
 import _ from 'lodash';
-import { ENTITY_TYPE } from 'src/decorators';
-import { v4 } from 'uuid';
 import 'reflect-metadata';
+import { Class } from 'type-fest';
+import { v4 } from 'uuid';
 
-export type EntityUpdateFn = () => void;
-
-export type EntityUpdateResult<T extends AnyEntity = AnyEntity> = {
-  beforeProps?: GetEntityProps<T>;
-  afterProps?: GetEntityProps<T>;
-};
-
-export class EntityUpdater<T extends AnyEntity = AnyEntity> {
-  entity: T;
-  updateFn: EntityUpdateFn;
-  result: EntityUpdateResult<T>;
-  executed: boolean;
-
-  constructor(entity: T, updateFn: EntityUpdateFn) {
-    this.entity = entity;
-    this.updateFn = updateFn;
-    this.result = {};
-    this.executed = false;
-  }
-
-  update() {
-    if (this.executed) return;
-
-    this.result.beforeProps = this.entity.getProps();
-
-    this.updateFn();
-
-    this.result.afterProps = this.entity.getProps();
-
-    this.executed = true;
-
-    return this.result;
-  }
+export interface EntityProps {
+  [key: string]: any;
 }
 
-export abstract class Entity<P> {
-  private readonly _type: string;
+export abstract class Entity<P extends EntityProps> {
   private readonly _id: string;
-  private _marked: boolean;
-  private _updaters: EntityUpdater[];
+  protected readonly _initialProps: P;
+  protected readonly _props: P;
 
-  protected _props: P;
-
-  constructor(type: string, id: string, props: P) {
-    this._type = type;
+  constructor(id: string, props: P) {
     this._id = id;
-    this._marked = false;
-    this._updaters = [];
 
-    this.setProps(props);
+    this.validateProps(props);
+
+    this._initialProps = this.makePropsInstance(props);
+    this._props = this.makePropsInstance(props);
   }
 
-  static isEntity(obj: any): obj is AnyEntity {
+  static isEntity(obj: object): obj is AnyEntity {
     return obj instanceof Entity;
   }
 
-  static getEntityType<T extends AnyEntity>(this: EntityClass<T>) {
-    return Reflect.getMetadata(ENTITY_TYPE, this) ?? this.name;
+  getEntityMetadata() {
+    return EntityMetadata.getEntityMetadata(this.constructor as Class<Entity<P>>);
   }
 
   static initEntity<T extends AnyEntity>(
@@ -69,59 +37,32 @@ export abstract class Entity<P> {
     props: GetEntityProps<T>,
     id: string = v4(),
   ) {
-    const entityType = this.getEntityType();
+    return new this(id, props);
+  }
 
-    return new this(entityType, id, props);
+  static cloneProps<P extends EntityProps>(props: P) {
+    return _.cloneDeep(props);
   }
 
   abstract validateProps(props: P): void;
-
-  get type() {
-    return this._type;
-  }
 
   get id() {
     return this._id;
   }
 
-  get updaters() {
-    return this._updaters;
-  }
+  private makePropsInstance(props: P) {
+    if (!props) return props;
 
-  private setProps(props: P) {
-    this.validateProps(props);
+    const { propsClass } = this.getEntityMetadata();
 
-    this._props = props;
+    if (!(props instanceof propsClass))
+      return plainToInstance(propsClass, Entity.cloneProps(props));
+
+    return props;
   }
 
   hasId(id: string) {
     return this.id === id;
-  }
-
-  protected mark() {
-    this._marked = true;
-  }
-
-  protected unmark() {
-    this._marked = false;
-  }
-
-  protected update(updateFn: EntityUpdateFn) {
-    const updater: EntityUpdater<typeof this> = new EntityUpdater(this, updateFn);
-
-    const result = updater.update();
-
-    this.validateProps(this._props);
-
-    this._updaters.push(updater);
-
-    this.mark();
-
-    return result;
-  }
-
-  hasChanged() {
-    return this._marked;
   }
 
   equalsType(entity: AnyEntity) {
@@ -134,8 +75,12 @@ export abstract class Entity<P> {
     return this.hasId(entity.id);
   }
 
+  getInitialProps() {
+    return Entity.cloneProps(this._initialProps);
+  }
+
   getProps() {
-    return _.cloneDeep(this._props);
+    return Entity.cloneProps(this._props);
   }
 }
 
@@ -143,7 +88,9 @@ export type AnyEntity = Entity<any>;
 
 export type GetEntityProps<T extends AnyEntity> = T extends Entity<infer Props> ? Props : never;
 
-export type EntityConstructorParamsWithProps<Props> = ConstructorParameters<typeof Entity<Props>>;
+export type EntityConstructorParamsWithProps<Props extends EntityProps> = ConstructorParameters<
+  typeof Entity<Props>
+>;
 
 export type EntityConstructorParams<T extends AnyEntity> = EntityConstructorParamsWithProps<
   GetEntityProps<T>

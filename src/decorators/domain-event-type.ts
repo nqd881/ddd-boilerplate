@@ -1,13 +1,12 @@
 import { AnyDomainEvent } from '#core/domain-event';
+import { DomainEventMetadata } from '#metadata/domain-event.metadata';
 import { DomainEventClass } from '#types/domain-event.type';
-import { DOMAIN_EVENT_AGGREGATE_TYPE, DOMAIN_EVENT_TYPE } from './constants';
 
-export const DomainEventType = <T extends AnyDomainEvent>(
-  aggregateType: string,
-  eventType?: string,
-) => {
+export const DomainEventType = <T extends AnyDomainEvent>(eventType?: string) => {
   return <U extends DomainEventClass<T>>(target: U) => {
-    Reflect.defineMetadata(DOMAIN_EVENT_AGGREGATE_TYPE, aggregateType, target);
-    Reflect.defineMetadata(DOMAIN_EVENT_TYPE, eventType, target);
+    DomainEventMetadata.defineDomainEventMetadata(
+      target,
+      new DomainEventMetadata(eventType ?? target.name),
+    );
   };
 };

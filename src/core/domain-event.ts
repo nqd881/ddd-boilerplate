@@ -1,40 +1,25 @@
+import { DomainEventMetadata } from '#metadata/domain-event.metadata';
 import { DomainEventClass } from '#types/domain-event.type';
-import 'reflect-metadata';
-import { DOMAIN_EVENT_AGGREGATE_TYPE, DOMAIN_EVENT_TYPE } from 'src/decorators';
+import _ from 'lodash';
+import { Class } from 'type-fest';
 import { v4 } from 'uuid';
 
-export interface DomainEventMetadata {
-  eventType: string;
-  aggregateType: string;
-}
-
 export class DomainEvent<P> {
-  public readonly metadata: Readonly<DomainEventMetadata>;
-  public readonly id: string;
-  public readonly aggregateId: string;
-  public readonly timestamp: number;
-  public readonly props: Readonly<P>;
+  private readonly _id: string;
+  private readonly _aggregateId: string;
+  private readonly _timestamp: number;
 
-  constructor(
-    metadata: DomainEventMetadata,
-    id: string,
-    aggregateId: string,
-    timestamp: number,
-    props: P,
-  ) {
-    this.metadata = metadata;
-    this.id = id;
-    this.aggregateId = aggregateId;
-    this.timestamp = timestamp;
-    this.props = props;
+  protected readonly _props: P;
+
+  constructor(id: string, aggregateId: string, timestamp: number, props: P) {
+    this._id = id;
+    this._aggregateId = aggregateId;
+    this._timestamp = timestamp;
+    this._props = props;
   }
 
-  static getDomainEventType<T extends AnyDomainEvent>(this: DomainEventClass<T>) {
-    return Reflect.getMetadata(DOMAIN_EVENT_TYPE, this) ?? this.name;
-  }
-
-  static getDomainEventAggregateType<T extends AnyDomainEvent>(this: DomainEventClass<T>) {
-    return Reflect.getMetadata(DOMAIN_EVENT_AGGREGATE_TYPE, this);
+  getDomainEventMetadata() {
+    return DomainEventMetadata.getDomainEventMetadata(this.constructor as Class<DomainEvent<P>>);
   }
 
   static newEvent<T extends AnyDomainEvent>(
@@ -43,12 +28,23 @@ export class DomainEvent<P> {
     props: GetDomainEventProps<T>,
     id: string = v4(),
   ) {
-    const metadata: DomainEventMetadata = {
-      aggregateType: this.getDomainEventAggregateType(),
-      eventType: this.getDomainEventType(),
-    };
+    return new this(id, aggregateId, Date.now(), props);
+  }
 
-    return new this(metadata, id, aggregateId, Date.now(), props);
+  get id() {
+    return this._id;
+  }
+
+  get aggregateId() {
+    return this._aggregateId;
+  }
+
+  get timestamp() {
+    return this._timestamp;
+  }
+
+  getProps() {
+    return _.cloneDeep(this._props);
   }
 }
 
