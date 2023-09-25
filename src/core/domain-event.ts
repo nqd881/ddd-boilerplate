@@ -8,7 +8,7 @@ export abstract class DomainEvent<P extends object> extends PropsEnvelope<P> {
   private readonly _timestamp: number;
 
   constructor(id: string, aggregateId: string, timestamp: number, props: P) {
-    super(props);
+    super(props, true);
 
     this._id = id;
     this._aggregateId = aggregateId;
