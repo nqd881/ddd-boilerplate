@@ -53,9 +53,9 @@ export abstract class PropsEnvelope<P extends Props> {
 
     updateFn();
 
-    this._updated = true;
-
     this.validateProps(this._props);
+
+    this._updated = true;
   }
 
   cloneInitialProps() {
