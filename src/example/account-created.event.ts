@@ -1,10 +1,12 @@
 import { DomainEvent } from '#core/domain-event';
 import { DomainEventType } from 'src/decorators/domain-event-type';
 
-export type AccountCreatedEventProps = {
+export class AccountCreatedEventProps {
   accountId: string;
   username: string;
-};
+}
 
-@DomainEventType()
-export class AccountCreatedEvent extends DomainEvent<AccountCreatedEventProps> {}
+@DomainEventType(AccountCreatedEventProps, 'account.created')
+export class AccountCreatedEvent extends DomainEvent<AccountCreatedEventProps> {
+  validateProps(props: AccountCreatedEventProps): void {}
+}

@@ -1,18 +1,20 @@
 import { AnyAggregate } from '#core/aggregate';
-import { GetEntityProps } from '#core/entity';
-import { AggregateMetadata } from '#metadata/aggregate.metadata';
+import { GetProps } from '#core/props-envelope';
 import { AggregateClass } from '#types/aggregate.type';
-import 'reflect-metadata';
 import { Class } from 'type-fest';
+import { PropsEnvelopeType } from './props-envelope-type';
+import { AggregateMetadata } from '#metadata/aggregate.metadata';
 
 export const AggregateType = <T extends AnyAggregate>(
-  propsClass: Class<GetEntityProps<T>>,
+  propsClass: Class<GetProps<T>>,
   aggregateType?: string,
 ) => {
   return <U extends AggregateClass<T>>(target: U) => {
     AggregateMetadata.defineAggregateMetadata(
       target,
-      new AggregateMetadata(aggregateType ?? target.name, propsClass),
+      new AggregateMetadata(aggregateType ?? target.name),
     );
+
+    return PropsEnvelopeType(propsClass)(target);
   };
 };

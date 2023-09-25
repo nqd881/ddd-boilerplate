@@ -1,29 +1,14 @@
-import { ValueObjectMetadata } from '#metadata/value-object.metadata';
 import { ValueObjectClassWithProps } from '#types/value-object.type';
 import _ from 'lodash';
-import { Class } from 'type-fest';
+import { GetProps, Props, PropsEnvelope } from './props-envelope';
 
-export abstract class ValueObject<P> {
-  protected readonly _props: P;
-
+export abstract class ValueObject<P extends Props> extends PropsEnvelope<P> {
   constructor(props: P) {
-    this.validateProps(props);
-
-    this._props = ValueObject.cloneProps(props);
-  }
-
-  static cloneProps<P>(props: P) {
-    return _.cloneDeep(props);
+    super(props, true);
   }
 
   static isValueObject(obj: any) {
     return obj instanceof ValueObject;
-  }
-
-  abstract validateProps(props: P): void;
-
-  getValueObjectMetadata() {
-    return ValueObjectMetadata.getValueObjectMetadata(this.constructor as Class<ValueObject<P>>);
   }
 
   equalsType(obj: ValueObject<P>) {
@@ -35,11 +20,11 @@ export abstract class ValueObject<P> {
 
     if (!this.equalsType(obj)) return false;
 
-    return JSON.stringify(this.getProps()) === JSON.stringify(obj.getProps());
+    return JSON.stringify(this.cloneProps()) === JSON.stringify(obj.cloneProps());
   }
 
   cloneWith(props: Partial<P> = {}) {
-    const clonedProps = this.getProps();
+    const clonedProps = this.cloneProps();
 
     const newProps = _.merge(clonedProps, props);
 
@@ -49,18 +34,10 @@ export abstract class ValueObject<P> {
   clone() {
     return this.cloneWith();
   }
-
-  getProps() {
-    return ValueObject.cloneProps(this._props);
-  }
 }
 
 export type AnyValueObject = ValueObject<any>;
 
-export type GetValueObjectProps<T extends AnyValueObject> = T extends ValueObject<infer Props>
-  ? Props
-  : any;
-
 export type ValueObjectConstructorParams<T extends AnyValueObject> = ConstructorParameters<
-  typeof ValueObject<GetValueObjectProps<T>>
+  typeof ValueObject<GetProps<T>>
 >;

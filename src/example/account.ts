@@ -6,6 +6,8 @@ import { Password } from './password';
 import { Book } from './book';
 import { Card } from './card';
 import { Transform, Type } from 'class-transformer';
+import { CardMap } from './card-map';
+import { PropsEnvelopeType } from '#decorators/props-envelope-type';
 
 export class AccountProps {
   username: string;
@@ -29,6 +31,8 @@ export class AccountProps {
     },
   )
   cards: Map<Book, Card>;
+
+  cardMap: CardMap;
 }
 
 export type CreateAccountProps = Omit<AccountProps, 'status'>;
@@ -67,7 +71,9 @@ export class Account extends Aggregate<AccountProps> {
   }
 
   changePassword(newPassword: Password) {
-    this._props.password = newPassword;
+    this.updateProps(() => {
+      this._props.password = newPassword;
+    });
   }
 
   addBook(book: Book) {
@@ -80,5 +86,9 @@ export class Account extends Aggregate<AccountProps> {
 
   updateCard(book: Book, card: Card) {
     this._props.cards.set(book, card);
+  }
+
+  updateCardMap(card: Card) {
+    this._props.cardMap.setCard(card);
   }
 }

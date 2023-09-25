@@ -1,15 +1,11 @@
-import {
-  AnyValueObject,
-  GetValueObjectProps,
-  ValueObject,
-  ValueObjectConstructorParams,
-} from '#core/value-object';
+import { GetProps, Props } from '#core/props-envelope';
+import { AnyValueObject, ValueObject, ValueObjectConstructorParams } from '#core/value-object';
 import { Class } from 'type-fest';
 
 export type ValueObjectClass<T extends AnyValueObject> = Omit<
-  typeof ValueObject<GetValueObjectProps<T>>,
+  typeof ValueObject<GetProps<T>>,
   'constructor'
 > &
   Class<T, ValueObjectConstructorParams<T>>;
 
-export type ValueObjectClassWithProps<P> = ValueObjectClass<ValueObject<P>>;
+export type ValueObjectClassWithProps<P extends Props> = ValueObjectClass<ValueObject<P>>;

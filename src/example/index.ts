@@ -1,6 +1,7 @@
 import { Account } from './account';
 import { Book } from './book';
 import { Card } from './card';
+import { CardMap, CardMapProps } from './card-map';
 import { Password } from './password';
 
 const bookA = Book.initEntity({
@@ -28,6 +29,7 @@ const account = Account.create({
   }),
   books: [bookA],
   cards: new Map(),
+  cardMap: CardMap.initEntity(new CardMapProps()),
 });
 
 account.changePassword(
@@ -37,9 +39,4 @@ account.changePassword(
   }),
 );
 
-account.addBook(bookB);
-
-account.updateCard(bookA, cardX);
-// account.updateCard(bookB, cardX);
-
-console.log(account.events);
+console.log(account.cloneProps());

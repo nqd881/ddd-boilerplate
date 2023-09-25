@@ -1,12 +1,11 @@
-import {
-  AnyDomainEvent,
-  DomainEvent,
-  DomainEventConstructorParams,
-  GetDomainEventProps,
-} from '#core/domain-event';
+import { AnyDomainEvent, DomainEvent, DomainEventConstructorParams } from '#core/domain-event';
+import { GetProps } from '#core/props-envelope';
 import { Class } from 'type-fest';
 
-export type DomainEventClass<T extends AnyDomainEvent> = Class<T, DomainEventConstructorParams<T>> &
-  typeof DomainEvent<GetDomainEventProps<T>>;
+export type DomainEventClass<T extends AnyDomainEvent> = Omit<
+  typeof DomainEvent<GetProps<T>>,
+  'constructor'
+> &
+  Class<T, DomainEventConstructorParams<T>>;
 
-export type DomainEventClassWithProps<P> = DomainEventClass<DomainEvent<P>>;
+export type DomainEventClassWithProps<P extends object> = DomainEventClass<DomainEvent<P>>;

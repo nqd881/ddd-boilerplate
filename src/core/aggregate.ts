@@ -1,12 +1,11 @@
 import { AggregateClass } from '#types/aggregate.type';
-import 'reflect-metadata';
-import { v4 } from 'uuid';
-import { AnyDomainEvent, GetDomainEventProps } from './domain-event';
-import { Entity, EntityProps, GetEntityProps } from './entity';
-import { Class } from 'type-fest';
-import { AggregateMetadata } from '#metadata/aggregate.metadata';
 import { DomainEventClass } from '#types/domain-event.type';
-export abstract class Aggregate<P extends EntityProps> extends Entity<P> {
+import { v4 } from 'uuid';
+import { AnyDomainEvent } from './domain-event';
+import { Entity } from './entity';
+import { GetProps, Props } from './props-envelope';
+
+export abstract class Aggregate<P extends Props> extends Entity<P> {
   protected _originalVersion: number;
   protected _events: AnyDomainEvent[];
 
@@ -27,13 +26,9 @@ export abstract class Aggregate<P extends EntityProps> extends Entity<P> {
     return obj instanceof Aggregate;
   }
 
-  getAggregateMetadata() {
-    return AggregateMetadata.getAggregateMetadata(this.constructor as Class<Aggregate<P>>);
-  }
-
   static initAggregate<T extends AnyAggregate>(
     this: AggregateClass<T>,
-    props: GetEntityProps<T>,
+    props: GetProps<T>,
     id: string = v4(),
   ) {
     return new this(id, props, 0, false);
@@ -42,7 +37,7 @@ export abstract class Aggregate<P extends EntityProps> extends Entity<P> {
   static loadAggregate<T extends AnyAggregate>(
     this: AggregateClass<T>,
     id: string,
-    props: GetEntityProps<T>,
+    props: GetProps<T>,
     version: number,
   ) {
     return new this(id, props, version, true);
@@ -55,11 +50,11 @@ export abstract class Aggregate<P extends EntityProps> extends Entity<P> {
   protected recordEvent<T extends AnyDomainEvent>(event: T): void;
   protected recordEvent<T extends AnyDomainEvent>(
     eventClass: DomainEventClass<T>,
-    props: GetDomainEventProps<T>,
+    props: GetProps<T>,
   ): void;
   protected recordEvent<T extends AnyDomainEvent>(
     param1: T | DomainEventClass<T>,
-    param2?: GetDomainEventProps<T>,
+    param2?: GetProps<T>,
   ): void {
     const newEvent = typeof param1 === 'function' ? param1.newEvent(this.id, param2!) : param1;
 
@@ -96,9 +91,9 @@ export abstract class Aggregate<P extends EntityProps> extends Entity<P> {
 
 export type AnyAggregate = Aggregate<any>;
 
-export type AggregateConstructorParamsWithProps<Props extends EntityProps> = ConstructorParameters<
-  typeof Aggregate<Props>
+export type AggregateConstructorParamsWithProps<P extends Props> = ConstructorParameters<
+  typeof Aggregate<P>
 >;
 
 export type AggregateConstructorParams<T extends AnyAggregate> =
-  AggregateConstructorParamsWithProps<GetEntityProps<T>>;
+  AggregateConstructorParamsWithProps<GetProps<T>>;

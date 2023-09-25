@@ -1,11 +1,11 @@
 import { Aggregate, AggregateConstructorParams, AnyAggregate } from '#core/aggregate';
-import { EntityProps, GetEntityProps } from '#core/entity';
+import { GetProps, Props } from '#core/props-envelope';
 import { Class } from 'type-fest';
 
 export type AggregateClass<T extends AnyAggregate> = Omit<
-  typeof Aggregate<GetEntityProps<T>>,
+  typeof Aggregate<GetProps<T>>,
   'constructor'
 > &
   Class<T, AggregateConstructorParams<T>>;
 
-export type AggregateClassWithProps<P extends EntityProps> = AggregateClass<Aggregate<P>>;
+export type AggregateClassWithProps<P extends Props> = AggregateClass<Aggregate<P>>;
