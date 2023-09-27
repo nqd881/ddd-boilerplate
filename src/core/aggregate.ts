@@ -5,7 +5,7 @@ import { AnyDomainEvent } from './domain-event';
 import { Entity } from './entity';
 import { GetProps, Props } from './props-envelope';
 
-export abstract class Aggregate<P extends Props> extends Entity<P> {
+export class Aggregate<P extends Props> extends Entity<P> {
   protected _originalVersion: number;
   protected _events: AnyDomainEvent[];
 
@@ -90,10 +90,3 @@ export abstract class Aggregate<P extends Props> extends Entity<P> {
 }
 
 export type AnyAggregate = Aggregate<any>;
-
-export type AggregateConstructorParamsWithProps<P extends Props> = ConstructorParameters<
-  typeof Aggregate<P>
->;
-
-export type AggregateConstructorParams<T extends AnyAggregate> =
-  AggregateConstructorParamsWithProps<GetProps<T>>;

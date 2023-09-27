@@ -1,3 +1,5 @@
+export * from './common.type';
+
 export * from './aggregate.type';
 export * from './domain-event.type';
 export * from './entity.type';

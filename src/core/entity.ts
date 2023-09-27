@@ -2,7 +2,7 @@ import { EntityClass } from '#types/entity.type';
 import { v4 } from 'uuid';
 import { GetProps, Props, PropsEnvelope } from './props-envelope';
 
-export abstract class Entity<P extends Props> extends PropsEnvelope<P> {
+export class Entity<P extends Props> extends PropsEnvelope<P> {
   private readonly _id: string;
 
   constructor(id: string, props: P) {
@@ -43,11 +43,3 @@ export abstract class Entity<P extends Props> extends PropsEnvelope<P> {
 }
 
 export type AnyEntity = Entity<any>;
-
-export type EntityConstructorParamsWithProps<P extends Props> = ConstructorParameters<
-  typeof Entity<P>
->;
-
-export type EntityConstructorParams<T extends AnyEntity> = EntityConstructorParamsWithProps<
-  GetProps<T>
->;

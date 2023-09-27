@@ -1,6 +1,7 @@
-import { PropsMetadata } from '#metadata/props.metadata';
+import { getPropsMetadata } from '#metadata/props.metadata';
 import { PropsEnvelopeClassWithProps } from '#types/props-envelope.type';
 import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import _ from 'lodash';
 
 export type Props = {
@@ -9,7 +10,7 @@ export type Props = {
 
 export type PropsUpdateFn = () => void;
 
-export abstract class PropsEnvelope<P extends Props> {
+export class PropsEnvelope<P extends Props> {
   private readonly _immutable: boolean;
   private _updated: boolean;
   private readonly _initialProps: P;
@@ -20,32 +21,49 @@ export abstract class PropsEnvelope<P extends Props> {
 
     this._immutable = immutable;
 
-    this._props = this.makePropsInstance(props);
-    this._initialProps = this.makePropsInstance(props);
+    this._props = this.transformProps(props);
+    this._initialProps = this.transformProps(props);
+
+    this.validate();
   }
 
   static cloneProps<P>(props: P) {
     return _.cloneDeep(props);
   }
 
-  abstract validateProps(props: P): void;
+  getPropsMetadata() {
+    return getPropsMetadata(this.constructor as PropsEnvelopeClassWithProps<P>);
+  }
 
-  makePropsInstance(props: P) {
-    this.validateProps(props);
+  transformProps(props: P) {
+    const {
+      propsClass,
+      options: { transformOptions },
+    } = this.getPropsMetadata();
 
-    const { propsClass } = PropsMetadata.getPropsMetadata(
-      this.constructor as PropsEnvelopeClassWithProps<P>,
-    );
+    const cloneProps = PropsEnvelope.cloneProps(props);
 
-    if (!propsClass) return PropsEnvelope.cloneProps(props);
+    if (!propsClass) return cloneProps;
 
-    if (!(props instanceof propsClass)) {
-      return plainToInstance(propsClass, PropsEnvelope.cloneProps(props), {
-        ignoreDecorators: true,
-      });
-    }
+    if (props instanceof propsClass) return cloneProps;
 
-    return PropsEnvelope.cloneProps(props);
+    return plainToInstance(propsClass, cloneProps, transformOptions);
+  }
+
+  private validateProps(props: P) {
+    if (!props) return;
+
+    const {
+      options: { validatorOptions },
+    } = this.getPropsMetadata();
+
+    const errors = validateSync(props, validatorOptions);
+
+    if (errors.length > 0) throw new Error('Validate props failed');
+  }
+
+  validate() {
+    this.validateProps(this._props);
   }
 
   updateProps(updateFn: PropsUpdateFn) {
@@ -53,7 +71,7 @@ export abstract class PropsEnvelope<P extends Props> {
 
     updateFn();
 
-    this.validateProps(this._props);
+    this.validate();
 
     this._updated = true;
   }

@@ -7,6 +7,4 @@ export class AccountCreatedEventProps {
 }
 
 @DomainEventType(AccountCreatedEventProps, 'account.created')
-export class AccountCreatedEvent extends DomainEvent<AccountCreatedEventProps> {
-  validateProps(props: AccountCreatedEventProps): void {}
-}
+export class AccountCreatedEvent extends DomainEvent<AccountCreatedEventProps> {}

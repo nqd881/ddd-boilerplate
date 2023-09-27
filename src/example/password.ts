@@ -8,8 +8,6 @@ export class PasswordProps {
 
 @ValueObjectType(PasswordProps)
 export class Password extends ValueObject<PasswordProps> {
-  validateProps(props: PasswordProps): void {}
-
   get value() {
     return this._props.value;
   }

@@ -1,8 +1,8 @@
 import { ValueObjectClassWithProps } from '#types/value-object.type';
 import _ from 'lodash';
-import { GetProps, Props, PropsEnvelope } from './props-envelope';
+import { Props, PropsEnvelope } from './props-envelope';
 
-export abstract class ValueObject<P extends Props> extends PropsEnvelope<P> {
+export class ValueObject<P extends Props> extends PropsEnvelope<P> {
   constructor(props: P) {
     super(props, true);
   }
@@ -37,7 +37,3 @@ export abstract class ValueObject<P extends Props> extends PropsEnvelope<P> {
 }
 
 export type AnyValueObject = ValueObject<any>;
-
-export type ValueObjectConstructorParams<T extends AnyValueObject> = ConstructorParameters<
-  typeof ValueObject<GetProps<T>>
->;

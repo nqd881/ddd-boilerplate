@@ -1,4 +1,4 @@
-import { EnumerationMetadata } from '#metadata/enumeration.metadata';
+import { getEnumerationMetadata } from '#metadata/enumeration.metadata';
 import { EnumerationClass } from '#types/enumeration.type';
 import { Class } from 'type-fest';
 
@@ -12,7 +12,7 @@ export class Enumeration {
   }
 
   static getEnumerationMetadata<T extends AnyEnumeration>(this: Class<T>) {
-    return EnumerationMetadata.getEnumerationMetadata(this);
+    return getEnumerationMetadata(this);
   }
 
   static parseEnum<T extends AnyEnumeration>(this: EnumerationClass<T>, value: EnumerationValue) {
@@ -31,5 +31,3 @@ export class Enumeration {
 }
 
 export type AnyEnumeration = Enumeration;
-
-export type EnumerationConstructorParams = ConstructorParameters<typeof Enumeration>;

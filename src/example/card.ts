@@ -8,8 +8,6 @@ export class CardProps {
 
 @EntityType(CardProps)
 export class Card extends Entity<CardProps> {
-  validateProps(props: CardProps): void {}
-
   get name() {
     return this._props.name;
   }

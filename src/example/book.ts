@@ -9,8 +9,6 @@ export class BookProps {
 
 @EntityType(BookProps)
 export class Book extends Entity<BookProps> {
-  validateProps(props: BookProps): void {}
-
   get title() {
     return this._props.title;
   }

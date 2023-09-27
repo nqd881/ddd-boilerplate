@@ -1,7 +1,6 @@
 import { Account } from './account';
 import { Book } from './book';
 import { Card } from './card';
-import { CardMap, CardMapProps } from './card-map';
 import { Password } from './password';
 
 const bookA = Book.initEntity({
@@ -10,15 +9,9 @@ const bookA = Book.initEntity({
   pagesCount: 100,
 });
 
-const bookB = Book.initEntity({
-  title: 'Book B',
-  description: 'Description of book B',
-  pagesCount: 150,
-});
-
 const cardX = Card.initEntity({
   name: 'Card X',
-  group: 'X',
+  group: 'A',
 });
 
 const account = Account.create({
@@ -29,8 +22,9 @@ const account = Account.create({
   }),
   books: [bookA],
   cards: new Map(),
-  cardMap: CardMap.initEntity(new CardMapProps()),
 });
+
+account.updateCard(bookA, cardX);
 
 account.changePassword(
   new Password({
