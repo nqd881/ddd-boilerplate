@@ -1,6 +1,6 @@
 {
   "name": "ddd-boilerplate",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Boilerplate for Domain Driven Design (DDD) in Typescript, Javascript",
   "main": "dist/index.js",
   "scripts": {
