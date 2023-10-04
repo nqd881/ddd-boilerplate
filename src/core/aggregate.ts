@@ -1,18 +1,26 @@
+import {
+  getAggregateCommandHandler,
+  getAggregateEventApplier,
+  getAggregateType,
+} from '#metadata/aggregate';
+import { getCommandType } from '#metadata/command';
+import { getDomainEventType } from '#metadata/domain-event';
 import { AggregateClass } from '#types/aggregate.type';
 import { DomainEventClass } from '#types/domain-event.type';
-import { v4 } from 'uuid';
+import { generateUUIDWithPrefix } from 'src/utils/id';
+import { AnyCommand } from './command';
 import { AnyDomainEvent } from './domain-event';
-import { Entity } from './entity';
-import { GetProps, Props } from './props-envelope';
+import { EntityBase } from './entity';
+import { GetProps } from './props-envelope';
 
-export class Aggregate<P extends Props> extends Entity<P> {
+export class AggregateBase<P extends object> extends EntityBase<P> {
   protected _originalVersion: number;
   protected _events: AnyDomainEvent[];
 
   // loaded from repo or new instance
   protected _loaded: boolean;
 
-  constructor(id: string, props: P, originalVersion: number, loaded: boolean) {
+  constructor(id: string, originalVersion: number, loaded: boolean, props?: P) {
     super(id, props);
 
     if (originalVersion < 0) throw new Error('Version must be set with non-negative number');
@@ -22,39 +30,44 @@ export class Aggregate<P extends Props> extends Entity<P> {
     this._loaded = loaded;
   }
 
-  static isAggregate(obj: object): obj is AnyAggregate {
-    return obj instanceof Aggregate;
+  static isAggregate(obj: object): obj is AggregateBase<any> {
+    return obj instanceof AggregateBase;
   }
 
-  static initAggregate<T extends AnyAggregate>(
-    this: AggregateClass<T>,
-    props: GetProps<T>,
-    id: string = v4(),
+  static initAggregate<A extends AnyAggregate>(
+    this: AggregateClass<A>,
+    props?: GetProps<A>,
+    id = generateUUIDWithPrefix(getAggregateType(this)),
   ) {
-    return new this(id, props, 0, false);
+    return new this(id, 0, false, props);
   }
 
-  static loadAggregate<T extends AnyAggregate>(
-    this: AggregateClass<T>,
+  static loadAggregate<A extends AnyAggregate>(
+    this: AggregateClass<A>,
     id: string,
-    props: GetProps<T>,
-    version: number,
+    originalVersion: number,
+    props: GetProps<A>,
+    historyEvents?: AnyDomainEvent[],
   ) {
-    return new this(id, props, version, true);
+    const aggregate = new this(id, originalVersion, true, props);
+
+    aggregate.applyEvents(historyEvents ?? [], true);
+
+    return aggregate;
   }
 
   hasEvents() {
     return Boolean(this.events.length);
   }
 
-  protected recordEvent<T extends AnyDomainEvent>(event: T): void;
-  protected recordEvent<T extends AnyDomainEvent>(
-    eventClass: DomainEventClass<T>,
-    props: GetProps<T>,
+  protected recordEvent<E extends AnyDomainEvent>(event: E): void;
+  protected recordEvent<E extends AnyDomainEvent>(
+    eventClass: DomainEventClass<E>,
+    props: GetProps<E>,
   ): void;
-  protected recordEvent<T extends AnyDomainEvent>(
-    param1: T | DomainEventClass<T>,
-    param2?: GetProps<T>,
+  protected recordEvent<E extends AnyDomainEvent>(
+    param1: E | DomainEventClass<E>,
+    param2?: GetProps<E>,
   ): void {
     const newEvent = typeof param1 === 'function' ? param1.newEvent(this.id, param2!) : param1;
 
@@ -87,6 +100,59 @@ export class Aggregate<P extends Props> extends Entity<P> {
 
     return this._originalVersion + 1;
   }
+
+  applyEvent<E extends AnyDomainEvent>(event: E, fromHistory = false) {
+    const eventType = getDomainEventType(event.constructor as any);
+
+    const prototype = Object.getPrototypeOf(this);
+
+    const applier = getAggregateEventApplier(prototype, eventType);
+
+    if (!applier) throw new Error(`Cannot apply event type ${eventType}`);
+
+    applier.bind(this)(event);
+
+    if (!fromHistory) this.recordEvent(event);
+  }
+
+  applyEvents(events: AnyDomainEvent[], fromHistory = true) {
+    events.forEach((event) => {
+      this.applyEvent(event, fromHistory);
+    });
+  }
+
+  processCommand<C extends AnyCommand>(command: C) {
+    const commandType = getCommandType(command.constructor as any);
+
+    const prototype = Object.getPrototypeOf(this);
+
+    const handler = getAggregateCommandHandler(prototype, commandType);
+
+    if (!handler) throw new Error(`Cannot process command type ${commandType}`);
+
+    const event = handler.bind(this)(command);
+
+    if (command.correlationId) event.setCorrelationId(command.correlationId);
+
+    return event;
+  }
+
+  processCommands(commands: AnyCommand[]) {
+    const events: AnyDomainEvent[] = [];
+
+    commands.forEach((command) => {
+      events.push(this.processCommand(command));
+    });
+
+    return events;
+  }
 }
 
-export type AnyAggregate = Aggregate<any>;
+export type AggregateEventApplier<E extends AnyDomainEvent> = (event: E) => void;
+
+export type AggregateCommandHandler<
+  C extends AnyCommand,
+  E extends AnyDomainEvent = AnyDomainEvent,
+> = (command: C) => E;
+
+export type AnyAggregate = AggregateBase<any>;

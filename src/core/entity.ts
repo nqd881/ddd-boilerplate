@@ -1,24 +1,25 @@
+import { getEntityType } from '#metadata/entity';
 import { EntityClass } from '#types/entity.type';
-import { v4 } from 'uuid';
-import { GetProps, Props, PropsEnvelope } from './props-envelope';
+import { generateUUIDWithPrefix } from 'src/utils/id';
+import { GetProps, PropsEnvelope } from './props-envelope';
 
-export class Entity<P extends Props> extends PropsEnvelope<P> {
+export class EntityBase<P extends object> extends PropsEnvelope<P> {
   private readonly _id: string;
 
-  constructor(id: string, props: P) {
+  constructor(id: string, props?: P) {
     super(props);
 
     this._id = id;
   }
 
   static isEntity(obj: object): obj is AnyEntity {
-    return obj instanceof Entity;
+    return obj instanceof EntityBase;
   }
 
   static initEntity<T extends AnyEntity>(
     this: EntityClass<T>,
-    props: GetProps<T>,
-    id: string = v4(),
+    props?: GetProps<T>,
+    id = generateUUIDWithPrefix(getEntityType(this)),
   ) {
     return new this(id, props);
   }
@@ -31,15 +32,15 @@ export class Entity<P extends Props> extends PropsEnvelope<P> {
     return this.id === id;
   }
 
-  equalsType(entity: AnyEntity) {
+  equalsType(entity: EntityBase<P>) {
     return entity instanceof this.constructor;
   }
 
-  equals(entity: AnyEntity) {
+  equals(entity: EntityBase<P>) {
     if (!this.equalsType(entity)) return false;
 
     return this.hasId(entity.id);
   }
 }
 
-export type AnyEntity = Entity<any>;
+export type AnyEntity = EntityBase<any>;

@@ -1,11 +1,11 @@
-import { Aggregate } from '#core/aggregate';
-import { AggregateType } from 'src/decorators';
+import { AggregateBase } from '#core/aggregate';
+import { Aggregate } from '#decorators/aggregate';
 import { AccountCreatedEvent } from './account-created.event';
 import { AccountStatus } from './account-status';
 import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class AccountProps {
   username: string;
@@ -13,16 +13,17 @@ export class AccountProps {
   status: AccountStatus;
   books: Book[];
 
-  @Transform(({ obj, key }) => {
-    return obj[key];
-  })
+  // @Transform(({ obj, key }) => {
+  //   return obj[key];
+  // })
+  // @Type(() => Map<Book, Card>)
   cards: Map<Book, Card>;
 }
 
 export type CreateAccountProps = Omit<AccountProps, 'status'>;
 
-@AggregateType(AccountProps)
-export class Account extends Aggregate<AccountProps> {
+@Aggregate(AccountProps)
+export class Account extends AggregateBase<AccountProps> {
   static create(props: CreateAccountProps) {
     const newAccount = this.initAggregate({
       ...props,
@@ -38,42 +39,42 @@ export class Account extends Aggregate<AccountProps> {
   }
 
   get username() {
-    return this._props.username;
+    return this.props.username;
   }
 
   get password() {
-    return this._props.password;
+    return this.props.password;
   }
 
   get status() {
-    return this._props.status;
+    return this.props.status;
   }
 
   get books() {
-    return this._props.books;
+    return this.props.books;
   }
 
   changePassword(newPassword: Password) {
     return this.updateProps(() => {
-      this._props.password = newPassword;
+      this.props.password = newPassword;
     });
   }
 
   addBook(book: Book) {
     return this.updateProps(() => {
-      this._props.books.push(book);
+      this.props.books.push(book);
     });
   }
 
   removeBook(bookId: string) {
     return this.updateProps(() => {
-      this._props.books = this._props.books.filter((book) => book.id !== bookId);
+      this.props.books = this.props.books.filter((book) => book.id !== bookId);
     });
   }
 
   updateCard(book: Book, card: Card) {
     return this.updateProps(() => {
-      this._props.cards.set(book, card);
+      this.props.cards.set(book, card);
     });
   }
 }

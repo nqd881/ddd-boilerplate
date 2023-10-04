@@ -1,8 +1,9 @@
-export * from './aggregate.metadata';
-export * from './domain-event.metadata';
-export * from './entity.metadata';
-export * from './enumeration.metadata';
-export * from './props.metadata';
-export * from './value-object.metadata';
-
 export * from './constants';
+
+export * from './aggregate';
+export * from './command';
+export * from './domain-event';
+export * from './entity';
+export * from './enumeration';
+export * from './props';
+export * from './value-object';

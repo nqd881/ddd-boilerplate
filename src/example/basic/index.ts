@@ -33,4 +33,5 @@ account.changePassword(
   }),
 );
 
-console.log(account.cloneProps());
+console.log(account);
+console.log(account.getProps());

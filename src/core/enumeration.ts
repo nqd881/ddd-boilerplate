@@ -1,18 +1,12 @@
-import { getEnumerationMetadata } from '#metadata/enumeration.metadata';
 import { EnumerationClass } from '#types/enumeration.type';
-import { Class } from 'type-fest';
 
 export type EnumerationValue = string | number;
 
-export class Enumeration {
+export class EnumerationBase {
   private readonly _value: EnumerationValue;
 
   constructor(value: EnumerationValue) {
     this._value = value;
-  }
-
-  static getEnumerationMetadata<T extends AnyEnumeration>(this: Class<T>) {
-    return getEnumerationMetadata(this);
   }
 
   static parseEnum<T extends AnyEnumeration>(this: EnumerationClass<T>, value: EnumerationValue) {
@@ -30,4 +24,4 @@ export class Enumeration {
   }
 }
 
-export type AnyEnumeration = Enumeration;
+export type AnyEnumeration = EnumerationBase;

@@ -1,10 +1,11 @@
 {
   "name": "ddd-boilerplate",
-  "version": "4.0.1",
+  "version": "5.0.0",
   "description": "Boilerplate for Domain Driven Design (DDD) in Typescript, Javascript",
   "main": "dist/index.js",
   "scripts": {
-    "example": "ts-node -r tsconfig-paths/register src/example/index",
+    "example-basic": "ts-node -r tsconfig-paths/register src/example/basic/index",
+    "example-event": "ts-node -r tsconfig-paths/register src/example/event-sourcing/index",
     "build": "rm -rf dist && npx tsc --project tsconfig.json && tsc-alias -p tsconfig.json"
   },
   "repository": {

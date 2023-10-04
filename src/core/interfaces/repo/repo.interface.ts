@@ -1,14 +1,14 @@
 import { AnyAggregate } from '#core/aggregate';
 import { Promisable } from 'type-fest';
 
-export interface IRepo<AR extends AnyAggregate> {
-  findById(id: string): Promisable<AR | null>;
+export interface IRepo<A extends AnyAggregate> {
+  findById(id: string): Promisable<A | null>;
 
-  create(aggregates: AR | AR[]): Promisable<any>;
+  create(aggregates: A | A[]): Promisable<any>;
 
-  updateOne(aggregate: AR): Promisable<any>;
+  updateOne(aggregate: A): Promisable<any>;
 
-  save(aggregate: AR): Promisable<any>;
+  save(aggregate: A): Promisable<any>;
 
   delete(aggregateId: string): Promisable<any>;
 }

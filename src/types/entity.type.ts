@@ -1,10 +1,10 @@
-import { AnyEntity, Entity } from '#core/entity';
-import { GetProps, Props } from '#core/props-envelope';
+import { GetProps } from '#core/props-envelope';
 import { Class } from 'type-fest';
 import { ClassTypeWithoutConstructorAndPrototype } from './common.type';
+import { AnyEntity, EntityBase } from '#core/entity';
 
-export type EntityConstructorParamsWithProps<P extends Props> = ConstructorParameters<
-  typeof Entity<P>
+export type EntityConstructorParamsWithProps<P extends object> = ConstructorParameters<
+  typeof EntityBase<P>
 >;
 
 export type EntityConstructorParams<T extends AnyEntity> = EntityConstructorParamsWithProps<
@@ -12,6 +12,6 @@ export type EntityConstructorParams<T extends AnyEntity> = EntityConstructorPara
 >;
 
 export type EntityClass<T extends AnyEntity> = Class<T, EntityConstructorParams<T>> &
-  ClassTypeWithoutConstructorAndPrototype<typeof Entity<GetProps<T>>>;
+  ClassTypeWithoutConstructorAndPrototype<typeof EntityBase<GetProps<T>>>;
 
-export type EntityClassWithProps<P extends Props> = EntityClass<Entity<P>>;
+export type EntityClassWithProps<P extends object> = EntityClass<EntityBase<P>>;
