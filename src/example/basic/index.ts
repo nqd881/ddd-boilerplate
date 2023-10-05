@@ -1,4 +1,5 @@
 import { Account } from './account';
+import { AccountStatus } from './account-status';
 import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
@@ -35,3 +36,6 @@ account.changePassword(
 
 console.log(account);
 console.log(account.getProps());
+console.log(account.status.equals(AccountStatus.ActivatePending));
+
+console.log(Object.getOwnPropertyNames(AccountStatus));

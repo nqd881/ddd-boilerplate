@@ -14,13 +14,21 @@ export class EnumerationBase {
   }
 
   static allEnums<T extends AnyEnumeration>(this: EnumerationClass<T>): T[] {
-    const properties = Object.keys(this);
+    const properties = Object.getOwnPropertyNames(this);
 
     return properties.map((name) => (this as any)[name]).filter((value) => value instanceof this);
   }
 
   get value() {
     return this._value;
+  }
+
+  equalsType(otherEnum: EnumerationBase) {
+    return otherEnum instanceof this.constructor;
+  }
+
+  equals(otherEnum: EnumerationBase) {
+    return this.equalsType(otherEnum) && this.value === otherEnum.value;
   }
 }
 
