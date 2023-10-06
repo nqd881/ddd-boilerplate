@@ -1,11 +1,9 @@
-import { Class } from 'type-fest';
 import { COMMAND_TYPE } from './constants';
-import { AnyCommand } from '#core/command';
 
-export const defineCommandType = <T extends AnyCommand>(target: Class<T>, commandType: string) => {
+export const defineCommandType = (target: object, commandType: string) => {
   Reflect.defineMetadata(COMMAND_TYPE, commandType, target);
 };
 
-export const getCommandType = <T extends AnyCommand>(target: Class<T>): string => {
+export const getCommandType = (target: object): string => {
   return Reflect.getMetadata(COMMAND_TYPE, target);
 };

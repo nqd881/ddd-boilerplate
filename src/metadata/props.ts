@@ -7,8 +7,7 @@ import 'reflect-metadata';
 
 export interface PropsOptions {
   validatorOptions?: ValidatorOptions;
-  toPropsOptions?: ClassTransformOptions;
-  toObjectOptions?: ClassTransformOptions;
+  transformOptions?: ClassTransformOptions;
 }
 
 export interface PropsMetadata<P> {
@@ -17,14 +16,14 @@ export interface PropsMetadata<P> {
 }
 
 export const definePropsMetadata = <T extends AnyPropsEnvelope>(
-  target: Class<T>,
+  target: object,
   metadata: PropsMetadata<GetProps<T>>,
 ) => {
   Reflect.defineMetadata(PROPS_METADATA, metadata, target);
 };
 
 export const getPropsMetadata = <T extends AnyPropsEnvelope>(
-  target: Class<T>,
+  target: object,
 ): PropsMetadata<GetProps<T>> => {
   return Reflect.getMetadata(PROPS_METADATA, target);
 };

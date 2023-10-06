@@ -4,6 +4,8 @@ import { DomainEventBase } from '#core/domain-event';
 import { Aggregate, ApplyEvent, ProcessCommand } from '#decorators/aggregate';
 import { Command } from '#decorators/command';
 import { DomainEvent } from '#decorators/domain-event';
+import { ToObject } from '#decorators/to-object';
+import { Transform } from 'class-transformer';
 
 export class ChangeNameCommandProps {
   name: string;
@@ -34,10 +36,18 @@ export class UserProps {
 
 @Aggregate(UserProps)
 export class User<P extends UserProps> extends AggregateBase<P> {
+  @ToObject()
+  @Transform(
+    ({ value }) => {
+      return `#${value}#`;
+    },
+    { toPlainOnly: true },
+  )
   get name() {
     return this.props.name;
   }
 
+  @ToObject()
   get age() {
     return this.props.age;
   }

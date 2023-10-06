@@ -1,15 +1,19 @@
+import { ToObject } from '#decorators/to-object';
 import { getPropsMetadata } from '#metadata/props';
-import { ClassTransformOptions, instanceToPlain, plainToInstance } from 'class-transformer';
+import { instanceToPlain, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import _ from 'lodash';
-import { Class } from 'type-fest';
-import { UninitializedError } from './errors/props';
+import {
+  PropsClassNotFoundError,
+  UninitializedError,
+  UpdateImmutablePropsError,
+  ValidatePropsFailedError,
+} from './errors/props';
 
 export type PropsUpdateFn = () => void;
 
 export class PropsEnvelope<P extends object> {
   private readonly _immutable: boolean;
-  private _initialProps?: P;
   private _props?: P;
 
   constructor(props?: P, immutable: boolean = false) {
@@ -23,11 +27,7 @@ export class PropsEnvelope<P extends object> {
   }
 
   isInitialized() {
-    return Boolean(this._initialProps && this._props);
-  }
-
-  private setInitialProps(props: P) {
-    this._initialProps = props;
+    return Boolean(this._props);
   }
 
   private setProps(props: P) {
@@ -37,22 +37,13 @@ export class PropsEnvelope<P extends object> {
   init(props: P) {
     if (this.isInitialized()) return;
 
-    const initialProps = () => this.makeProps(props);
-
-    this.setInitialProps(initialProps());
-    this.setProps(initialProps());
-  }
-
-  protected get initialProps() {
-    if (!this.isInitialized()) throw UninitializedError;
-
-    return this._initialProps!;
+    this.setProps(this.makeProps(props));
   }
 
   protected get props() {
-    if (!this.isInitialized()) throw UninitializedError;
+    if (!this._props) throw new UninitializedError();
 
-    return this._props!;
+    return this._props;
   }
 
   get immutable() {
@@ -60,7 +51,7 @@ export class PropsEnvelope<P extends object> {
   }
 
   getPropsMetadata() {
-    return getPropsMetadata(this.constructor as Class<AnyPropsEnvelope>);
+    return getPropsMetadata(Object.getPrototypeOf(this));
   }
 
   transformProps(props: P) {
@@ -68,11 +59,11 @@ export class PropsEnvelope<P extends object> {
 
     const cloneProps = PropsEnvelope.cloneProps(props);
 
-    if (!propsClass) throw new Error('Not found props class in metadata');
+    if (!propsClass) throw new PropsClassNotFoundError();
 
     if (props instanceof propsClass) return cloneProps;
 
-    return plainToInstance(propsClass, cloneProps, propsOptions?.toPropsOptions);
+    return plainToInstance(propsClass, cloneProps, propsOptions?.transformOptions);
   }
 
   validateProps(props?: P) {
@@ -82,7 +73,7 @@ export class PropsEnvelope<P extends object> {
 
     const errors = validateSync(props, propsOptions?.validatorOptions);
 
-    if (errors.length > 0) throw new Error('Validate props failed');
+    if (errors.length > 0) throw new ValidatePropsFailedError();
   }
 
   makeProps(props: P) {
@@ -94,42 +85,45 @@ export class PropsEnvelope<P extends object> {
   }
 
   validate() {
-    this.validateProps(this._initialProps);
     this.validateProps(this._props);
   }
 
   updateProps(updateFn: PropsUpdateFn) {
-    if (this._immutable) throw new Error('Cannot update props of immutable props-envelope');
+    if (this._immutable) throw new UpdateImmutablePropsError();
 
     updateFn();
 
     this.validate();
   }
 
-  getInitialProps() {
-    return PropsEnvelope.cloneProps(this._initialProps);
-  }
-
   getProps() {
     return PropsEnvelope.cloneProps(this._props);
   }
 
-  protected makePropsObject(props?: P, options?: ClassTransformOptions) {
-    if (!props) return props;
+  toObject() {
+    return instanceToPlain(this, {
+      strategy: 'excludeAll',
+    });
+  }
+}
 
-    const { propsOptions } = this.getPropsMetadata();
+export class PropsEnvelopeWithId<P extends object> extends PropsEnvelope<P> {
+  @ToObject()
+  private readonly _id: string;
 
-    options = _.merge(propsOptions?.toObjectOptions, options);
+  constructor(id: string, props?: P, immutable?: boolean) {
+    super(props, immutable);
 
-    return instanceToPlain(props, options);
+    this._id = id;
   }
 
-  getInitialPropsObject(options?: ClassTransformOptions) {
-    return this.makePropsObject(this._initialProps, options);
+  @ToObject()
+  get id() {
+    return this._id;
   }
 
-  getPropsObject(options?: ClassTransformOptions) {
-    return this.makePropsObject(this._props, options);
+  hasId(id: string) {
+    return this._id === id;
   }
 }
 

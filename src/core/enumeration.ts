@@ -1,3 +1,5 @@
+import { ToObject } from '#decorators/to-object';
+import { getEnumerationType } from '#metadata/enumeration';
 import { EnumerationClass } from '#types/enumeration.type';
 
 export type EnumerationValue = string | number;
@@ -19,6 +21,16 @@ export class EnumerationBase {
     return properties.map((name) => (this as any)[name]).filter((value) => value instanceof this);
   }
 
+  getEnumerationType() {
+    return getEnumerationType(Object.getPrototypeOf(this));
+  }
+
+  @ToObject({ name: '_enumerationType' })
+  get enumerationType() {
+    return this.getEnumerationType();
+  }
+
+  @ToObject()
   get value() {
     return this._value;
   }

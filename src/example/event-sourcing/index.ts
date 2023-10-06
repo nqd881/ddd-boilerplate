@@ -1,25 +1,28 @@
 import { ChangeGradeCommand, CreateStudentCommand, Student, StudentProps } from './student';
 import { ChangeNameCommand } from './user';
+import { Vehicle } from './vehicle';
+
+const bikeX = Vehicle.initEntity({
+  type: 'bike',
+  color: 'red',
+});
 
 const studentXProps: StudentProps = {
   name: 'Nam',
   age: 22,
   grade: 10,
+  vehicle: bikeX,
 };
 
 const studentX = Student.initAggregate();
 
-console.log(studentX);
-
-const event0 = studentX.processCommand(
-  CreateStudentCommand.newCommand({ studentProps: studentXProps }),
+studentX.processCommand(
+  CreateStudentCommand.newCommand({
+    studentProps: studentXProps,
+  }),
 );
 
-studentX.applyEvent(event0);
-
-console.log(studentX);
-
-const event1 = studentX.processCommand(
+studentX.processCommand(
   ChangeNameCommand.newCommand(
     {
       name: 'Huy Vu',
@@ -29,16 +32,13 @@ const event1 = studentX.processCommand(
   ),
 );
 
-studentX.applyEvent(event1);
-
-console.log(studentX);
-
-const event2 = studentX.processCommand(
+studentX.processCommand(
   ChangeGradeCommand.newCommand({
     grade: 6,
   }),
 );
 
-studentX.applyEvent(event2);
+const initialStudentX = studentX.getSnapshots()[0];
 
-console.log(studentX);
+console.log(studentX.toObject());
+console.log(initialStudentX.toObject());

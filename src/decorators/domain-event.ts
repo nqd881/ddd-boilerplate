@@ -11,7 +11,7 @@ export const DomainEvent = <E extends AnyDomainEvent>(
   propsOptions?: PropsOptions,
 ) => {
   return <U extends DomainEventClass<E>>(target: U) => {
-    definePropsMetadata(target, { propsClass, propsOptions });
-    defineDomainEventType(target, eventType ?? target.name);
+    definePropsMetadata(target.prototype, { propsClass, propsOptions });
+    defineDomainEventType(target.prototype, eventType ?? target.name);
   };
 };

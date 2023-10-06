@@ -1,8 +1,10 @@
 import { EnumerationBase } from '#core/enumeration';
-import { Enumeration } from '#decorators/enumeration';
+import { EnumValue, Enumeration } from '#decorators/enumeration';
 
 @Enumeration()
 export class AccountStatus extends EnumerationBase {
-  static ActivatePending = new AccountStatus('ActivatePending');
-  static Activated = new AccountStatus('Activated');
+  @EnumValue('activate-pending')
+  static ActivatePending: AccountStatus;
+
+  static Activated = new AccountStatus('activated');
 }

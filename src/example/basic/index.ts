@@ -25,7 +25,7 @@ const account = Account.create({
   cards: new Map(),
 });
 
-account.updateCard(bookA, cardX);
+account.updateCard(cardX);
 
 account.changePassword(
   new Password({
@@ -34,8 +34,4 @@ account.changePassword(
   }),
 );
 
-console.log(account);
-console.log(account.getProps());
-console.log(account.status.equals(AccountStatus.ActivatePending));
-
-console.log(Object.getOwnPropertyNames(AccountStatus));
+console.log(account.toObject());

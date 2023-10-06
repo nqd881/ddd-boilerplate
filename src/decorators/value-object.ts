@@ -11,7 +11,7 @@ export const ValueObject = <T extends AnyValueObject>(
   propsOptions?: PropsOptions,
 ) => {
   return <U extends ValueObjectClass<T>>(target: U) => {
-    definePropsMetadata(target, { propsClass, propsOptions });
-    defineValueObjectType(target, valueObjectType ?? target.name);
+    definePropsMetadata(target.prototype, { propsClass, propsOptions });
+    defineValueObjectType(target.prototype, valueObjectType ?? target.name);
   };
 };

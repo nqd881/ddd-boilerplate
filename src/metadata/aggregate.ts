@@ -1,6 +1,5 @@
 import { AggregateCommandHandler, AggregateEventApplier, AnyAggregate } from '#core/aggregate';
 import { AnyDomainEvent } from '#core/domain-event';
-import { Class } from 'type-fest';
 import {
   AGGREGATE_COMMANDS_METADATA,
   AGGREGATE_EVENTS_METADATA,
@@ -8,14 +7,11 @@ import {
 } from './constants';
 import { AnyCommand } from '#core/command';
 
-export const defineAggregateType = <T extends AnyAggregate>(
-  target: Class<T>,
-  aggregateType: string,
-) => {
+export const defineAggregateType = (target: object, aggregateType: string) => {
   Reflect.defineMetadata(AGGREGATE_TYPE, aggregateType, target);
 };
 
-export const getAggregateType = <T extends AnyAggregate>(target: Class<T>): string => {
+export const getAggregateType = (target: object): string => {
   return Reflect.getMetadata(AGGREGATE_TYPE, target);
 };
 

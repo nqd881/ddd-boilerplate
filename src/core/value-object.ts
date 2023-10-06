@@ -1,6 +1,8 @@
 import { ValueObjectClassWithProps } from '#types/value-object.type';
 import _ from 'lodash';
 import { PropsEnvelope } from './props-envelope';
+import { getValueObjectType } from '#metadata/value-object';
+import { ToObject } from '#decorators/to-object';
 
 export class ValueObjectBase<P extends object> extends PropsEnvelope<P> {
   constructor(props: P) {
@@ -9,6 +11,15 @@ export class ValueObjectBase<P extends object> extends PropsEnvelope<P> {
 
   static isValueObject(obj: any) {
     return obj instanceof ValueObjectBase;
+  }
+
+  getValueObjectType() {
+    return getValueObjectType(Object.getPrototypeOf(this));
+  }
+
+  @ToObject({ name: '_valueObjectType' })
+  get valueObjectType() {
+    return this.getValueObjectType();
   }
 
   equalsType(obj: ValueObjectBase<P>) {
@@ -20,7 +31,7 @@ export class ValueObjectBase<P extends object> extends PropsEnvelope<P> {
 
     if (!this.equalsType(obj)) return false;
 
-    return JSON.stringify(this.getPropsObject()) === JSON.stringify(obj.getPropsObject());
+    return JSON.stringify(this.toObject()) === JSON.stringify(obj.toObject());
   }
 
   cloneWith(props: Partial<P> = {}) {

@@ -1,23 +1,18 @@
 import { AggregateBase } from '#core/aggregate';
 import { Aggregate } from '#decorators/aggregate';
+import { ToObject } from '#decorators/to-object';
 import { AccountCreatedEvent } from './account-created.event';
 import { AccountStatus } from './account-status';
 import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
-import { Transform, Type } from 'class-transformer';
 
 export class AccountProps {
   username: string;
   password: Password;
   status: AccountStatus;
   books: Book[];
-
-  // @Transform(({ obj, key }) => {
-  //   return obj[key];
-  // })
-  // @Type(() => Map<Book, Card>)
-  cards: Map<Book, Card>;
+  cards: Map<string, Card>;
 }
 
 export type CreateAccountProps = Omit<AccountProps, 'status'>;
@@ -38,20 +33,29 @@ export class Account extends AggregateBase<AccountProps> {
     return newAccount;
   }
 
+  @ToObject()
   get username() {
     return this.props.username;
   }
 
+  @ToObject()
   get password() {
     return this.props.password;
   }
 
+  @ToObject()
   get status() {
     return this.props.status;
   }
 
+  @ToObject()
   get books() {
     return this.props.books;
+  }
+
+  @ToObject()
+  get cards() {
+    return this.props.cards;
   }
 
   changePassword(newPassword: Password) {
@@ -72,9 +76,9 @@ export class Account extends AggregateBase<AccountProps> {
     });
   }
 
-  updateCard(book: Book, card: Card) {
+  updateCard(card: Card) {
     return this.updateProps(() => {
-      this.props.cards.set(book, card);
+      this.props.cards.set(card.id, card);
     });
   }
 }

@@ -1,14 +1,9 @@
-import { AnyDomainEvent } from '#core/domain-event';
-import { Class } from 'type-fest';
 import { DOMAIN_EVENT_TYPE } from './constants';
 
-export const defineDomainEventType = <T extends AnyDomainEvent>(
-  target: Class<T>,
-  eventType: string,
-) => {
+export const defineDomainEventType = (target: object, eventType: string) => {
   Reflect.defineMetadata(DOMAIN_EVENT_TYPE, eventType, target);
 };
 
-export const getDomainEventType = <T extends AnyDomainEvent>(target: Class<T>): string => {
+export const getDomainEventType = (target: object): string => {
   return Reflect.getMetadata(DOMAIN_EVENT_TYPE, target);
 };

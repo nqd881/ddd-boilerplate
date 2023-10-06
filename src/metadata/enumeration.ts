@@ -1,14 +1,9 @@
-import { Class } from 'type-fest';
 import { ENUMERATION_TYPE } from './constants';
-import { AnyEnumeration } from '#core/enumeration';
 
-export const defineEnumerationType = <T extends AnyEnumeration>(
-  target: Class<T>,
-  eventType: string,
-) => {
+export const defineEnumerationType = (target: object, eventType: string) => {
   Reflect.defineMetadata(ENUMERATION_TYPE, eventType, target);
 };
 
-export const getEnumerationType = <T extends AnyEnumeration>(target: Class<T>): string => {
+export const getEnumerationType = (target: object): string => {
   return Reflect.getMetadata(ENUMERATION_TYPE, target);
 };

@@ -1,17 +1,19 @@
+import { ToObject } from '#decorators/to-object';
 import { getCommandType } from '#metadata/command';
 import { CommandClass } from '#types/command.type';
-import { generateUUIDWithPrefix } from 'src/utils/id';
-import { GetProps, PropsEnvelope } from './props-envelope';
+import { generateUUIDWithPrefix } from 'src/utils';
+import { GetProps, PropsEnvelopeWithId } from './props-envelope';
 
-export class CommandBase<P extends object> extends PropsEnvelope<P> {
-  private readonly _id: string;
+export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
+  @ToObject()
   private readonly _timestamp: number;
+
+  @ToObject()
   private _correlationId?: string;
 
   constructor(id: string, timestamp: number, props: P, correlationId?: string) {
-    super(props, true);
+    super(id, props, true);
 
-    this._id = id;
     this._timestamp = timestamp;
     this._correlationId = correlationId;
   }
@@ -19,10 +21,16 @@ export class CommandBase<P extends object> extends PropsEnvelope<P> {
   static newCommand<C extends AnyCommand>(
     this: CommandClass<C>,
     props: GetProps<C>,
-    id = generateUUIDWithPrefix(getCommandType(this)),
+    id?: string,
     correlationId?: string,
   ) {
+    id = generateUUIDWithPrefix(getCommandType(this.prototype));
+
     return new this(id, Date.now(), props, correlationId);
+  }
+
+  getCommandType() {
+    return getCommandType(Object.getPrototypeOf(this));
   }
 
   setCorrelationId(correlationId: string) {
@@ -31,8 +39,9 @@ export class CommandBase<P extends object> extends PropsEnvelope<P> {
     this._correlationId = correlationId;
   }
 
-  get id() {
-    return this._id;
+  @ToObject({ name: '_commandType' })
+  get commandType() {
+    return this.getCommandType();
   }
 
   get timestamp() {

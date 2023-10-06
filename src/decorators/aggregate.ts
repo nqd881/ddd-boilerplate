@@ -18,16 +18,18 @@ import { PropsOptions, definePropsMetadata } from '#metadata/props';
 import { AggregateClass } from '#types/aggregate.type';
 import { CommandClass } from '#types/command.type';
 import { DomainEventClass } from '#types/domain-event.type';
+import { isFunction } from 'lodash';
 import { Class } from 'type-fest';
 
+// define on prototype of class
 export const Aggregate = <A extends AnyAggregate>(
   propsClass: Class<GetProps<A>>,
   aggregateType?: string,
   propsOptions?: PropsOptions,
 ) => {
   return <U extends AggregateClass<A>>(target: U) => {
-    definePropsMetadata(target, { propsClass, propsOptions });
-    defineAggregateType(target, aggregateType ?? target.name);
+    definePropsMetadata(target.prototype, { propsClass, propsOptions });
+    defineAggregateType(target.prototype, aggregateType ?? target.name);
   };
 };
 
@@ -37,9 +39,11 @@ export const ApplyEvent = <E extends AnyDomainEvent>(domainEvent: DomainEventCla
     propertyKey: string | symbol,
     descriptor: TypedPropertyDescriptor<T>,
   ) => {
-    const eventType = getDomainEventType(domainEvent);
+    if (isFunction(descriptor.value)) {
+      const eventType = getDomainEventType(domainEvent.prototype);
 
-    defineAggregateEventApplier(target, eventType, descriptor.value!);
+      defineAggregateEventApplier(target, eventType, descriptor.value);
+    }
   };
 };
 
@@ -49,8 +53,10 @@ export const ProcessCommand = <C extends AnyCommand>(commandClass: CommandClass<
     propertyKey: string,
     descriptor: TypedPropertyDescriptor<T>,
   ) => {
-    const commandType = getCommandType(commandClass);
+    if (isFunction(descriptor.value)) {
+      const commandType = getCommandType(commandClass.prototype);
 
-    defineAggregateCommandHandler(target, commandType, descriptor.value!);
+      defineAggregateCommandHandler(target, commandType, descriptor.value);
+    }
   };
 };

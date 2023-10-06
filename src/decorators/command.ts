@@ -11,7 +11,7 @@ export const Command = <E extends AnyCommand>(
   propsOptions?: PropsOptions,
 ) => {
   return <U extends CommandClass<E>>(target: U) => {
-    definePropsMetadata(target, { propsClass, propsOptions });
-    defineCommandType(target, commandType ?? target.name);
+    definePropsMetadata(target.prototype, { propsClass, propsOptions });
+    defineCommandType(target.prototype, commandType ?? target.name);
   };
 };

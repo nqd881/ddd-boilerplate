@@ -1,21 +1,29 @@
+import { ToObject } from '#decorators/to-object';
 import {
   getAggregateCommandHandler,
   getAggregateEventApplier,
   getAggregateType,
 } from '#metadata/aggregate';
-import { getCommandType } from '#metadata/command';
-import { getDomainEventType } from '#metadata/domain-event';
 import { AggregateClass } from '#types/aggregate.type';
 import { DomainEventClass } from '#types/domain-event.type';
-import { generateUUIDWithPrefix } from 'src/utils/id';
+import _ from 'lodash';
+import { deepFreeze, generateUUIDWithPrefix } from 'src/utils';
 import { AnyCommand } from './command';
 import { AnyDomainEvent } from './domain-event';
 import { EntityBase } from './entity';
+import {
+  CommandHandlerNotFoundError,
+  EventApplierNotFoundError,
+  NonNegativeVersionError,
+} from './errors/aggregate';
 import { GetProps } from './props-envelope';
 
 export class AggregateBase<P extends object> extends EntityBase<P> {
-  protected _originalVersion: number;
-  protected _events: AnyDomainEvent[];
+  @ToObject()
+  protected readonly _originalVersion: number;
+
+  protected _events: AnyDomainEvent[] = [];
+  protected _snapshots: (typeof this)[] = [];
 
   // loaded from repo or new instance
   protected _loaded: boolean;
@@ -23,10 +31,9 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   constructor(id: string, originalVersion: number, loaded: boolean, props?: P) {
     super(id, props);
 
-    if (originalVersion < 0) throw new Error('Version must be set with non-negative number');
+    if (originalVersion < 0) throw new NonNegativeVersionError();
 
     this._originalVersion = originalVersion;
-    this._events = [];
     this._loaded = loaded;
   }
 
@@ -37,8 +44,10 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   static initAggregate<A extends AnyAggregate>(
     this: AggregateClass<A>,
     props?: GetProps<A>,
-    id = generateUUIDWithPrefix(getAggregateType(this)),
+    id?: string,
   ) {
+    id = generateUUIDWithPrefix(getAggregateType(this.prototype));
+
     return new this(id, 0, false, props);
   }
 
@@ -56,8 +65,22 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return aggregate;
   }
 
+  init(props: P): void {
+    super.init(props);
+
+    this.snap();
+  }
+
+  getAggregateType() {
+    return getAggregateType(Object.getPrototypeOf(this));
+  }
+
   hasEvents() {
     return Boolean(this.events.length);
+  }
+
+  clearEvents() {
+    this._events = [];
   }
 
   protected recordEvent<E extends AnyDomainEvent>(event: E): void;
@@ -71,16 +94,19 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   ): void {
     const newEvent = typeof param1 === 'function' ? param1.newEvent(this.id, param2!) : param1;
 
-    this._events.push(newEvent);
-  }
+    if (!this._events) this._events = [];
 
-  clearEvents() {
-    this._events = [];
+    this._events.push(newEvent);
   }
 
   // mean has no change was saved before
   isNew() {
     return this._originalVersion === 0 && !this._loaded;
+  }
+
+  @ToObject({ name: '_aggregateType' })
+  get aggregateType() {
+    return this.getAggregateType();
   }
 
   get events() {
@@ -95,22 +121,36 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return this._loaded;
   }
 
+  @ToObject({ name: '_nextVersion' })
   get nextVersion() {
     if (this.isNew()) return this._originalVersion;
 
     return this._originalVersion + 1;
   }
 
-  applyEvent<E extends AnyDomainEvent>(event: E, fromHistory = false) {
-    const eventType = getDomainEventType(event.constructor as any);
+  @ToObject({ name: '_eventVersion' })
+  get lastEventVersion() {
+    return this._originalVersion + this._events.length;
+  }
 
+  getEventApplier(eventType: string) {
     const prototype = Object.getPrototypeOf(this);
 
-    const applier = getAggregateEventApplier(prototype, eventType);
+    const eventApplier = getAggregateEventApplier(prototype, eventType);
 
-    if (!applier) throw new Error(`Cannot apply event type ${eventType}`);
+    if (eventApplier) return eventApplier.bind(this);
 
-    applier.bind(this)(event);
+    return null;
+  }
+
+  applyEvent<E extends AnyDomainEvent>(event: E, fromHistory = false) {
+    const eventType = event.eventType;
+
+    const applier = this.getEventApplier(eventType);
+
+    if (!applier) throw new EventApplierNotFoundError(eventType);
+
+    applier(event);
 
     if (!fromHistory) this.recordEvent(event);
   }
@@ -121,30 +161,50 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     });
   }
 
-  processCommand<C extends AnyCommand>(command: C) {
-    const commandType = getCommandType(command.constructor as any);
-
+  getCommandHandler(commandType: string) {
     const prototype = Object.getPrototypeOf(this);
 
-    const handler = getAggregateCommandHandler(prototype, commandType);
+    const commandHandler = getAggregateCommandHandler(prototype, commandType);
 
-    if (!handler) throw new Error(`Cannot process command type ${commandType}`);
+    if (commandHandler) return commandHandler.bind(this);
 
-    const event = handler.bind(this)(command);
+    return null;
+  }
+
+  processCommand<C extends AnyCommand>(command: C) {
+    const commandType = command.commandType;
+
+    const handler = this.getCommandHandler(commandType);
+
+    if (!handler) throw new CommandHandlerNotFoundError(commandType);
+
+    const event = handler(command);
 
     if (command.correlationId) event.setCorrelationId(command.correlationId);
+
+    this.applyEvent(event);
 
     return event;
   }
 
-  processCommands(commands: AnyCommand[]) {
-    const events: AnyDomainEvent[] = [];
+  addSnapshot(snapshot: typeof this) {
+    if (!this._snapshots) this._snapshots = [];
 
-    commands.forEach((command) => {
-      events.push(this.processCommand(command));
-    });
+    this._snapshots.push(snapshot);
+  }
 
-    return events;
+  snap() {
+    const snapshot = _.cloneDeep(this);
+
+    deepFreeze(snapshot);
+
+    this.addSnapshot(snapshot);
+
+    return snapshot;
+  }
+
+  getSnapshots() {
+    return this._snapshots;
   }
 }
 

@@ -1,35 +1,26 @@
 import { getEntityType } from '#metadata/entity';
 import { EntityClass } from '#types/entity.type';
-import { generateUUIDWithPrefix } from 'src/utils/id';
-import { GetProps, PropsEnvelope } from './props-envelope';
+import { generateUUIDWithPrefix } from 'src/utils';
+import { GetProps, PropsEnvelopeWithId } from './props-envelope';
+import { ToObject } from '#decorators/to-object';
 
-export class EntityBase<P extends object> extends PropsEnvelope<P> {
-  private readonly _id: string;
-
+export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
   constructor(id: string, props?: P) {
-    super(props);
-
-    this._id = id;
+    super(id, props);
   }
 
   static isEntity(obj: object): obj is AnyEntity {
     return obj instanceof EntityBase;
   }
 
-  static initEntity<T extends AnyEntity>(
-    this: EntityClass<T>,
-    props?: GetProps<T>,
-    id = generateUUIDWithPrefix(getEntityType(this)),
-  ) {
+  static initEntity<T extends AnyEntity>(this: EntityClass<T>, props?: GetProps<T>, id?: string) {
+    id = generateUUIDWithPrefix(getEntityType(this.prototype));
+
     return new this(id, props);
   }
 
-  get id() {
-    return this._id;
-  }
-
-  hasId(id: string) {
-    return this.id === id;
+  getEntityType() {
+    return getEntityType(Object.getPrototypeOf(this));
   }
 
   equalsType(entity: EntityBase<P>) {
@@ -40,6 +31,11 @@ export class EntityBase<P extends object> extends PropsEnvelope<P> {
     if (!this.equalsType(entity)) return false;
 
     return this.hasId(entity.id);
+  }
+
+  @ToObject({ name: '_entityType' })
+  get entityType() {
+    return this.getEntityType();
   }
 }
 

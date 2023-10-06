@@ -11,7 +11,7 @@ export const Entity = <T extends AnyEntity>(
   propsOptions?: PropsOptions,
 ) => {
   return <U extends EntityClass<T>>(target: U) => {
-    definePropsMetadata(target, { propsClass, propsOptions });
-    defineEntityType(target, entityType ?? target.name);
+    definePropsMetadata(target.prototype, { propsClass, propsOptions });
+    defineEntityType(target.prototype, entityType ?? target.name);
   };
 };

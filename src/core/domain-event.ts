@@ -1,12 +1,17 @@
+import { ToObject } from '#decorators/to-object';
 import { getDomainEventType } from '#metadata/domain-event';
 import { DomainEventClass } from '#types/domain-event.type';
-import { generateUUIDWithPrefix } from 'src/utils/id';
-import { GetProps, PropsEnvelope } from './props-envelope';
+import { generateUUIDWithPrefix } from 'src/utils';
+import { GetProps, PropsEnvelopeWithId } from './props-envelope';
 
-export class DomainEventBase<P extends object> extends PropsEnvelope<P> {
-  private readonly _id: string;
+export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
+  @ToObject()
   private readonly _aggregateId: string;
+
+  @ToObject()
   private readonly _timestamp: number;
+
+  @ToObject()
   private _correlationId?: string;
 
   constructor(
@@ -16,9 +21,8 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<P> {
     props: P,
     correlationId?: string,
   ) {
-    super(props, true);
+    super(id, props, true);
 
-    this._id = id;
     this._aggregateId = aggregateId;
     this._timestamp = timestamp;
     this._correlationId = correlationId;
@@ -28,10 +32,16 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<P> {
     this: DomainEventClass<E>,
     aggregateId: string,
     props: GetProps<E>,
-    id = generateUUIDWithPrefix(getDomainEventType(this)),
+    id?: string,
     correlationId?: string,
   ) {
+    id = id ?? generateUUIDWithPrefix(getDomainEventType(this.prototype));
+
     return new this(id, aggregateId, Date.now(), props, correlationId);
+  }
+
+  getEventType() {
+    return getDomainEventType(Object.getPrototypeOf(this));
   }
 
   setCorrelationId(correlationId: string) {
@@ -40,8 +50,9 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<P> {
     this._correlationId = correlationId;
   }
 
-  get id() {
-    return this._id;
+  @ToObject({ name: '_eventType' })
+  get eventType() {
+    return this.getEventType();
   }
 
   get aggregateId() {
