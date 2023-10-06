@@ -26,7 +26,6 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "deep-object-diff": "^1.1.9",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13",
     "type-fest": "^4.3.1",
