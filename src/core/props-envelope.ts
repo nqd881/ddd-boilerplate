@@ -22,7 +22,7 @@ export class PropsEnvelope<P extends object> {
     if (props) this.init(props);
   }
 
-  static cloneProps<P extends object>(props?: P) {
+  static cloneProps<P extends object>(props: P) {
     return _.cloneDeep(props);
   }
 
@@ -97,6 +97,8 @@ export class PropsEnvelope<P extends object> {
   }
 
   getProps() {
+    if (!this._props) throw new UninitializedError();
+
     return PropsEnvelope.cloneProps(this._props);
   }
 
