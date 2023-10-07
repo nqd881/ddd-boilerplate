@@ -17,6 +17,7 @@ import {
   NonNegativeVersionError,
 } from './errors/aggregate';
 import { GetProps } from './props-envelope';
+import { toArray } from '#utils/to-array';
 
 export class AggregateBase<P extends object> extends EntityBase<P> {
   @ToObject()
@@ -178,13 +179,15 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
     if (!handler) throw new CommandHandlerNotFoundError(commandType);
 
-    const event = handler(command);
+    const events = toArray(handler(command));
 
-    if (command.correlationId) event.setCorrelationId(command.correlationId);
+    events.forEach((event) => {
+      if (command.correlationId) event.setCorrelationId(command.correlationId);
 
-    this.applyEvent(event);
+      this.applyEvent(event);
+    });
 
-    return event;
+    return events;
   }
 
   addSnapshot(snapshot: typeof this) {
@@ -213,6 +216,6 @@ export type AggregateEventApplier<E extends AnyDomainEvent> = (event: E) => void
 export type AggregateCommandHandler<
   C extends AnyCommand,
   E extends AnyDomainEvent = AnyDomainEvent,
-> = (command: C) => E;
+> = (command: C) => E | E[];
 
 export type AnyAggregate = AggregateBase<any>;
