@@ -51,7 +51,7 @@ export class PropsEnvelope<P extends object> {
   }
 
   getPropsMetadata() {
-    return getPropsMetadata(Object.getPrototypeOf(this));
+    return getPropsMetadata<typeof this>(Object.getPrototypeOf(this));
   }
 
   transformProps(props: P) {
@@ -69,7 +69,9 @@ export class PropsEnvelope<P extends object> {
   validateProps(props?: P) {
     if (!props) return;
 
-    const { propsOptions } = this.getPropsMetadata();
+    const { propsClass, propsOptions } = this.getPropsMetadata();
+
+    if (!(props instanceof propsClass)) props = this.transformProps(props);
 
     const errors = validateSync(props, propsOptions?.validatorOptions);
 
