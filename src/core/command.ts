@@ -24,7 +24,7 @@ export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
     id?: string,
     correlationId?: string,
   ) {
-    id = generateUUIDWithPrefix(getCommandType(this.prototype));
+    id = id ?? generateUUIDWithPrefix(getCommandType(this.prototype));
 
     return new this(id, Date.now(), props, correlationId);
   }

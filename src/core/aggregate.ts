@@ -47,7 +47,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     props?: GetProps<A>,
     id?: string,
   ) {
-    id = generateUUIDWithPrefix(getAggregateType(this.prototype));
+    id = id ?? generateUUIDWithPrefix(getAggregateType(this.prototype));
 
     return new this(id, 0, false, props);
   }
