@@ -40,5 +40,6 @@ studentX.processCommand(
 
 const initialStudentX = studentX.getSnapshots()[0];
 
+console.log(studentX.events);
 console.log(studentX.toObject());
 console.log(initialStudentX.toObject());

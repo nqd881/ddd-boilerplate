@@ -56,7 +56,7 @@ export class User<P extends UserProps> extends AggregateBase<P> {
   processChangeNameCommand(command: ChangeNameCommand) {
     if (command.name === 'Vu') throw new Error('Cannot change name to Vu');
 
-    return NameChangedEvent.newEvent(this.id, {
+    return this.newEvent(NameChangedEvent, {
       newName: command.name,
     });
   }

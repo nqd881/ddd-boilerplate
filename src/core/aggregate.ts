@@ -84,6 +84,13 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     this._events = [];
   }
 
+  newEvent<E extends AnyDomainEvent>(eventClass: DomainEventClass<E>, props: GetProps<E>) {
+    return eventClass.newEvent(
+      { type: this.getAggregateType(), id: this.id, version: this.lastEventVersion + 1 },
+      props,
+    );
+  }
+
   protected recordEvent<E extends AnyDomainEvent>(event: E): void;
   protected recordEvent<E extends AnyDomainEvent>(
     eventClass: DomainEventClass<E>,
@@ -93,7 +100,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     param1: E | DomainEventClass<E>,
     param2?: GetProps<E>,
   ): void {
-    const newEvent = typeof param1 === 'function' ? param1.newEvent(this.id, param2!) : param1;
+    const newEvent = typeof param1 === 'function' ? this.newEvent(param1, param2!) : param1;
 
     if (!this._events) this._events = [];
 
@@ -131,7 +138,11 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
   @ToObject({ name: '_eventVersion' })
   get lastEventVersion() {
-    return this._originalVersion + this._events.length;
+    const lastEvent = this._events.at(-1);
+
+    if (lastEvent) return lastEvent.aggregate.version;
+
+    return -1;
   }
 
   getEventApplier(eventType: string) {

@@ -92,7 +92,7 @@ export class Student extends User<StudentProps> {
   processCreate(command: CreateStudentCommand) {
     const props = this.makeProps(command.studentProps);
 
-    return StudentCreatedEvent.newEvent(this.id, {
+    return this.newEvent(StudentCreatedEvent, {
       name: props.name,
       age: props.age,
       grade: props.grade,
@@ -114,7 +114,7 @@ export class Student extends User<StudentProps> {
   changeGrade(command: ChangeGradeCommand) {
     if (command.grade > 12) throw new Error('Grade must be less or equal than 12');
 
-    return GradeChangedEvent.newEvent(this.id, { newGrade: command.grade });
+    return this.newEvent(GradeChangedEvent, { newGrade: command.grade });
   }
 
   @ApplyEvent(GradeChangedEvent)

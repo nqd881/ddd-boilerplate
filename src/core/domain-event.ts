@@ -4,9 +4,15 @@ import { DomainEventClass } from '#types/domain-event.type';
 import { generateUUIDWithPrefix } from 'src/utils';
 import { GetProps, PropsEnvelopeWithId } from './props-envelope';
 
+export interface DomainEventAggregate {
+  type: string;
+  id: string;
+  version: number;
+}
+
 export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
   @ToObject()
-  private readonly _aggregateId: string;
+  private readonly _aggregate: DomainEventAggregate;
 
   @ToObject()
   private readonly _timestamp: number;
@@ -16,28 +22,28 @@ export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
 
   constructor(
     id: string,
-    aggregateId: string,
+    aggregate: DomainEventAggregate,
     timestamp: number,
     props: P,
     correlationId?: string,
   ) {
     super(id, props, true);
 
-    this._aggregateId = aggregateId;
+    this._aggregate = aggregate;
     this._timestamp = timestamp;
     this._correlationId = correlationId;
   }
 
   static newEvent<E extends AnyDomainEvent>(
     this: DomainEventClass<E>,
-    aggregateId: string,
+    aggregate: DomainEventAggregate,
     props: GetProps<E>,
     id?: string,
     correlationId?: string,
   ) {
     id = id ?? generateUUIDWithPrefix(getDomainEventType(this.prototype));
 
-    return new this(id, aggregateId, Date.now(), props, correlationId);
+    return new this(id, aggregate, Date.now(), props, correlationId);
   }
 
   getEventType() {
@@ -55,8 +61,8 @@ export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
     return this.getEventType();
   }
 
-  get aggregateId() {
-    return this._aggregateId;
+  get aggregate() {
+    return this._aggregate;
   }
 
   get timestamp() {
