@@ -33,7 +33,7 @@ export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
     return this.hasId(entity.id);
   }
 
-  @ToObject({ name: '_entityType' })
+  @ToObject()
   get entityType() {
     return this.getEntityType();
   }

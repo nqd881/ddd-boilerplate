@@ -1,23 +1,20 @@
 import { ToObject } from '#decorators/to-object';
 import { getDomainEventType } from '#metadata/domain-event';
 import { DomainEventClass } from '#types/domain-event.type';
+import { Type } from 'class-transformer';
 import { generateUUIDWithPrefix } from 'src/utils';
 import { GetProps, PropsEnvelopeWithId } from './props-envelope';
 
-export interface DomainEventAggregate {
+@ToObject()
+export class DomainEventAggregate {
   type: string;
   id: string;
   version: number;
 }
 
 export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
-  @ToObject()
   private readonly _aggregate: DomainEventAggregate;
-
-  @ToObject()
   private readonly _timestamp: number;
-
-  @ToObject()
   private _correlationId?: string;
 
   constructor(
@@ -56,19 +53,23 @@ export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
     this._correlationId = correlationId;
   }
 
-  @ToObject({ name: '_eventType' })
+  @ToObject()
   get eventType() {
     return this.getEventType();
   }
 
+  @ToObject()
+  @Type(() => DomainEventAggregate)
   get aggregate() {
     return this._aggregate;
   }
 
+  @ToObject()
   get timestamp() {
     return this._timestamp;
   }
 
+  @ToObject()
   get correlationId() {
     return this._correlationId;
   }

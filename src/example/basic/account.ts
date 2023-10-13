@@ -7,6 +7,7 @@ import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
 
+@ToObject()
 export class AccountProps {
   username: string;
   password: Password;
@@ -33,27 +34,22 @@ export class Account extends AggregateBase<AccountProps> {
     return newAccount;
   }
 
-  @ToObject()
   get username() {
     return this.props.username;
   }
 
-  @ToObject()
   get password() {
     return this.props.password;
   }
 
-  @ToObject()
   get status() {
     return this.props.status;
   }
 
-  @ToObject()
   get books() {
     return this.props.books;
   }
 
-  @ToObject()
   get cards() {
     return this.props.cards;
   }

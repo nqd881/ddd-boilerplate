@@ -14,19 +14,18 @@ import { EntityBase } from './entity';
 import {
   CommandHandlerNotFoundError,
   EventApplierNotFoundError,
+  InvalidEventAggregateIdError,
+  InvalidEventAggregateTypeError,
+  InvalidEventAggregateVersionError,
   NonNegativeVersionError,
 } from './errors/aggregate';
 import { GetProps } from './props-envelope';
 import { toArray } from '#utils/to-array';
 
 export class AggregateBase<P extends object> extends EntityBase<P> {
-  @ToObject()
   protected readonly _originalVersion: number;
-
   protected _events: AnyDomainEvent[] = [];
   protected _snapshots: (typeof this)[] = [];
-
-  // loaded from repo or new instance
   protected _loaded: boolean;
 
   constructor(id: string, originalVersion: number, loaded: boolean, props?: P) {
@@ -86,9 +85,23 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
   newEvent<E extends AnyDomainEvent>(eventClass: DomainEventClass<E>, props: GetProps<E>) {
     return eventClass.newEvent(
-      { type: this.getAggregateType(), id: this.id, version: this.lastEventVersion + 1 },
+      {
+        type: this.getAggregateType(),
+        id: this.id,
+        version: this.getNextEventVersion(),
+      },
       props,
     );
+  }
+
+  private validateEventBeforeRecord<E extends AnyDomainEvent>(event: E) {
+    if (event.aggregate.type !== this.getAggregateType())
+      throw new InvalidEventAggregateTypeError();
+
+    if (event.aggregate.id !== this.id) throw new InvalidEventAggregateIdError();
+
+    if (event.aggregate.version !== this.getNextEventVersion())
+      throw new InvalidEventAggregateVersionError();
   }
 
   protected recordEvent<E extends AnyDomainEvent>(event: E): void;
@@ -102,6 +115,8 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   ): void {
     const newEvent = typeof param1 === 'function' ? this.newEvent(param1, param2!) : param1;
 
+    this.validateEventBeforeRecord(newEvent);
+
     if (!this._events) this._events = [];
 
     this._events.push(newEvent);
@@ -112,7 +127,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return this._originalVersion === 0 && !this._loaded;
   }
 
-  @ToObject({ name: '_aggregateType' })
+  @ToObject()
   get aggregateType() {
     return this.getAggregateType();
   }
@@ -121,28 +136,27 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return this._events;
   }
 
+  @ToObject()
   get originalVersion() {
     return this._originalVersion;
   }
 
+  @ToObject()
   get loaded() {
     return this._loaded;
   }
 
-  @ToObject({ name: '_nextVersion' })
-  get nextVersion() {
-    if (this.isNew()) return this._originalVersion;
-
-    return this._originalVersion + 1;
-  }
-
-  @ToObject({ name: '_eventVersion' })
-  get lastEventVersion() {
+  @ToObject({ name: 'eventVersion' })
+  getLastEventVersion() {
     const lastEvent = this._events.at(-1);
 
     if (lastEvent) return lastEvent.aggregate.version;
 
-    return -1;
+    return this.originalVersion;
+  }
+
+  getNextEventVersion() {
+    return this.getLastEventVersion() + 1;
   }
 
   getEventApplier(eventType: string) {

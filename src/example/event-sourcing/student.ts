@@ -3,12 +3,13 @@ import { DomainEventBase } from '#core/domain-event';
 import { Aggregate, ApplyEvent, ProcessCommand } from '#decorators/aggregate';
 import { Command } from '#decorators/command';
 import { DomainEvent } from '#decorators/domain-event';
-import { Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { Min } from 'class-validator';
 import { User, UserProps } from './user';
 import { Vehicle } from './vehicle';
 import { ToObject } from '#decorators/to-object';
 
+@ToObject()
 export class StudentProps extends UserProps {
   @Min(5)
   grade: number;
@@ -28,6 +29,7 @@ export class CreateStudentCommand extends CommandBase<CreateStudentCommandProps>
   }
 }
 
+@ToObject()
 export class StudentCreatedEventProps {
   name: string;
   age: number;
@@ -78,12 +80,10 @@ export class GradeChangedEvent extends DomainEventBase<GradeChangedEventProps> {
 
 @Aggregate(StudentProps)
 export class Student extends User<StudentProps> {
-  @ToObject()
   get grade() {
     return this.props.grade;
   }
 
-  @ToObject()
   get vehicle() {
     return this.props.vehicle;
   }

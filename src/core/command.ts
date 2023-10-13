@@ -5,10 +5,7 @@ import { generateUUIDWithPrefix } from 'src/utils';
 import { GetProps, PropsEnvelopeWithId } from './props-envelope';
 
 export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
-  @ToObject()
   private readonly _timestamp: number;
-
-  @ToObject()
   private _correlationId?: string;
 
   constructor(id: string, timestamp: number, props: P, correlationId?: string) {
@@ -39,15 +36,17 @@ export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
     this._correlationId = correlationId;
   }
 
-  @ToObject({ name: '_commandType' })
+  @ToObject()
   get commandType() {
     return this.getCommandType();
   }
 
+  @ToObject()
   get timestamp() {
     return this._timestamp;
   }
 
+  @ToObject()
   get correlationId() {
     return this._correlationId;
   }

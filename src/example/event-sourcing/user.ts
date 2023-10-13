@@ -29,25 +29,24 @@ export class NameChangedEvent extends DomainEventBase<NameChangedEventProps> {
   }
 }
 
+@ToObject()
 export class UserProps {
+  @Transform(
+    ({ value }) => {
+      return `#_${value}_#`;
+    },
+    { toPlainOnly: true },
+  )
   name: string;
   age: number;
 }
 
 @Aggregate(UserProps)
 export class User<P extends UserProps> extends AggregateBase<P> {
-  @ToObject()
-  @Transform(
-    ({ value }) => {
-      return `#${value}#`;
-    },
-    { toPlainOnly: true },
-  )
   get name() {
     return this.props.name;
   }
 
-  @ToObject()
   get age() {
     return this.props.age;
   }

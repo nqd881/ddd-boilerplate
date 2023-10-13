@@ -25,7 +25,7 @@ export class EnumerationBase {
     return getEnumerationType(Object.getPrototypeOf(this));
   }
 
-  @ToObject({ name: '_enumerationType' })
+  @ToObject()
   get enumerationType() {
     return this.getEnumerationType();
   }

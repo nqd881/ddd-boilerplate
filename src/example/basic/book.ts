@@ -2,6 +2,7 @@ import { EntityBase } from '#core/entity';
 import { Entity } from '#decorators/entity';
 import { ToObject } from '#decorators/to-object';
 
+@ToObject()
 export class BookProps {
   title: string;
   description: string;
@@ -10,17 +11,14 @@ export class BookProps {
 
 @Entity(BookProps)
 export class Book extends EntityBase<BookProps> {
-  @ToObject()
   get title() {
     return this.props.title;
   }
 
-  @ToObject()
   get description() {
     return this.props.description;
   }
 
-  @ToObject()
   get pagesCount() {
     return this.props.pagesCount;
   }

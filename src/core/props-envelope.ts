@@ -1,6 +1,6 @@
 import { ToObject } from '#decorators/to-object';
 import { getPropsMetadata } from '#metadata/props';
-import { instanceToPlain, plainToInstance } from 'class-transformer';
+import { ClassTransformOptions, instanceToPlain, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import _ from 'lodash';
 import {
@@ -40,6 +40,7 @@ export class PropsEnvelope<P extends object> {
     this.setProps(this.makeProps(props));
   }
 
+  @ToObject()
   protected get props() {
     if (!this._props) throw new UninitializedError();
 
@@ -104,15 +105,15 @@ export class PropsEnvelope<P extends object> {
     return PropsEnvelope.cloneProps(this._props);
   }
 
-  toObject() {
+  toObject(options?: ClassTransformOptions) {
     return instanceToPlain(this, {
       strategy: 'excludeAll',
+      ...options,
     });
   }
 }
 
 export class PropsEnvelopeWithId<P extends object> extends PropsEnvelope<P> {
-  @ToObject()
   private readonly _id: string;
 
   constructor(id: string, props?: P, immutable?: boolean) {
