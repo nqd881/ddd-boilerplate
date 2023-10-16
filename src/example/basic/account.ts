@@ -26,10 +26,12 @@ export class Account extends AggregateBase<AccountProps> {
       status: AccountStatus.ActivatePending,
     });
 
-    newAccount.recordEvent(AccountCreatedEvent, {
+    const accountCreatedEvent = newAccount.newEvent(AccountCreatedEvent, {
       accountId: newAccount.id,
       username: newAccount.username,
     });
+
+    newAccount.addEvent(accountCreatedEvent);
 
     return newAccount;
   }

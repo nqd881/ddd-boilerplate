@@ -22,7 +22,9 @@ export class EnumerationBase {
   }
 
   getEnumerationType() {
-    return getEnumerationType(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getEnumerationType(prototype);
   }
 
   @ToObject()

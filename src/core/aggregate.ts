@@ -6,6 +6,7 @@ import {
 } from '#metadata/aggregate';
 import { AggregateClass } from '#types/aggregate.type';
 import { DomainEventClass } from '#types/domain-event.type';
+import { toArray } from '#utils/to-array';
 import _ from 'lodash';
 import { deepFreeze, generateUUIDWithPrefix } from 'src/utils';
 import { AnyCommand } from './command';
@@ -18,13 +19,15 @@ import {
   InvalidEventAggregateTypeError,
   InvalidEventAggregateVersionError,
   NonNegativeVersionError,
+  PastEventCannotBeAddedError,
 } from './errors/aggregate';
 import { GetProps } from './props-envelope';
-import { toArray } from '#utils/to-array';
 
 export class AggregateBase<P extends object> extends EntityBase<P> {
   protected readonly _originalVersion: number;
+  protected _pastEvents: AnyDomainEvent[] = [];
   protected _events: AnyDomainEvent[] = [];
+  protected _initialSnapshot: typeof this;
   protected _snapshots: (typeof this)[] = [];
   protected _loaded: boolean;
 
@@ -46,7 +49,9 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     props?: GetProps<A>,
     id?: string,
   ) {
-    id = id ?? generateUUIDWithPrefix(getAggregateType(this.prototype));
+    const aggregateType = getAggregateType(this.prototype);
+
+    id = id ?? generateUUIDWithPrefix(aggregateType);
 
     return new this(id, 0, false, props);
   }
@@ -56,11 +61,20 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     id: string,
     originalVersion: number,
     props: GetProps<A>,
-    historyEvents?: AnyDomainEvent[],
   ) {
-    const aggregate = new this(id, originalVersion, true, props);
+    return new this(id, originalVersion, true, props);
+  }
 
-    aggregate.applyEvents(historyEvents ?? [], true);
+  static loadAggregateFromSnapshot<A extends AnyAggregate>(
+    this: AggregateClass<A>,
+    id: string,
+    snapshotVersion: number,
+    snapshotProps: GetProps<A>,
+    pastEvents: AnyDomainEvent[] = [],
+  ) {
+    const aggregate = this.loadAggregate(id, snapshotVersion, snapshotProps);
+
+    aggregate.applyEvents(pastEvents, true);
 
     return aggregate;
   }
@@ -68,61 +82,15 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   init(props: P): void {
     super.init(props);
 
-    this.snap();
+    this.makeInitialSnapshot();
   }
 
   getAggregateType() {
-    return getAggregateType(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getAggregateType(prototype);
   }
 
-  hasEvents() {
-    return Boolean(this.events.length);
-  }
-
-  clearEvents() {
-    this._events = [];
-  }
-
-  newEvent<E extends AnyDomainEvent>(eventClass: DomainEventClass<E>, props: GetProps<E>) {
-    return eventClass.newEvent(
-      {
-        type: this.getAggregateType(),
-        id: this.id,
-        version: this.getNextEventVersion(),
-      },
-      props,
-    );
-  }
-
-  private validateEventBeforeRecord<E extends AnyDomainEvent>(event: E) {
-    if (event.aggregate.type !== this.getAggregateType())
-      throw new InvalidEventAggregateTypeError();
-
-    if (event.aggregate.id !== this.id) throw new InvalidEventAggregateIdError();
-
-    if (event.aggregate.version !== this.getNextEventVersion())
-      throw new InvalidEventAggregateVersionError();
-  }
-
-  protected recordEvent<E extends AnyDomainEvent>(event: E): void;
-  protected recordEvent<E extends AnyDomainEvent>(
-    eventClass: DomainEventClass<E>,
-    props: GetProps<E>,
-  ): void;
-  protected recordEvent<E extends AnyDomainEvent>(
-    param1: E | DomainEventClass<E>,
-    param2?: GetProps<E>,
-  ): void {
-    const newEvent = typeof param1 === 'function' ? this.newEvent(param1, param2!) : param1;
-
-    this.validateEventBeforeRecord(newEvent);
-
-    if (!this._events) this._events = [];
-
-    this._events.push(newEvent);
-  }
-
-  // mean has no change was saved before
   isNew() {
     return this._originalVersion === 0 && !this._loaded;
   }
@@ -130,10 +98,6 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   @ToObject()
   get aggregateType() {
     return this.getAggregateType();
-  }
-
-  get events() {
-    return this._events;
   }
 
   @ToObject()
@@ -146,9 +110,61 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return this._loaded;
   }
 
+  get pastEvents() {
+    return this._pastEvents;
+  }
+
+  get events() {
+    return this._events;
+  }
+
+  get initialSnapshot() {
+    return this._initialSnapshot;
+  }
+
+  get snapshots() {
+    return this._snapshots;
+  }
+
+  hasEvents() {
+    return Boolean(this.events.length);
+  }
+
+  clearEvents() {
+    this._events = [];
+  }
+
+  protected addEvent<E extends AnyDomainEvent>(event: E) {
+    if (!this._events) this._events = [];
+
+    this._events.push(event);
+  }
+
+  protected addPastEvent<E extends AnyDomainEvent>(event: E) {
+    if (this.hasEvents()) throw new PastEventCannotBeAddedError();
+
+    if (!this._pastEvents) this._pastEvents = [];
+
+    this._pastEvents.push(event);
+  }
+
+  protected newEvent<E extends AnyDomainEvent>(
+    eventClass: DomainEventClass<E>,
+    props: GetProps<E>,
+  ) {
+    return eventClass.newEvent(
+      {
+        type: this.getAggregateType(),
+        id: this.id,
+        version: this.getNextEventVersion(),
+      },
+      props,
+    );
+  }
+
   @ToObject({ name: 'eventVersion' })
   getLastEventVersion() {
-    const lastEvent = this._events.at(-1);
+    const lastEvent = this.hasEvents() ? this._events.at(-1) : this._pastEvents.at(-1);
 
     if (lastEvent) return lastEvent.aggregate.version;
 
@@ -157,6 +173,16 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
   getNextEventVersion() {
     return this.getLastEventVersion() + 1;
+  }
+
+  private validateEventBeforeApply<E extends AnyDomainEvent>(event: E) {
+    if (event.aggregate.type !== this.getAggregateType())
+      throw new InvalidEventAggregateTypeError();
+
+    if (event.aggregate.id !== this.id) throw new InvalidEventAggregateIdError();
+
+    if (event.aggregate.version !== this.getNextEventVersion())
+      throw new InvalidEventAggregateVersionError();
   }
 
   getEventApplier(eventType: string) {
@@ -176,12 +202,15 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
     if (!applier) throw new EventApplierNotFoundError(eventType);
 
-    applier(event);
+    this.validateEventBeforeApply(event);
 
-    if (!fromHistory) this.recordEvent(event);
+    if (!fromHistory) this.addEvent(event);
+    else this.addPastEvent(event);
+
+    applier(event);
   }
 
-  applyEvents(events: AnyDomainEvent[], fromHistory = true) {
+  applyEvents(events: AnyDomainEvent[], fromHistory = false) {
     events.forEach((event) => {
       this.applyEvent(event, fromHistory);
     });
@@ -215,24 +244,32 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return events;
   }
 
+  snap() {
+    const snapshot = _.cloneDeep(this);
+
+    deepFreeze(snapshot);
+
+    return snapshot;
+  }
+
+  private makeInitialSnapshot() {
+    const initialSnapshot = this.snap();
+
+    if (!this._initialSnapshot) this._initialSnapshot = initialSnapshot;
+  }
+
   addSnapshot(snapshot: typeof this) {
     if (!this._snapshots) this._snapshots = [];
 
     this._snapshots.push(snapshot);
   }
 
-  snap() {
-    const snapshot = _.cloneDeep(this);
-
-    deepFreeze(snapshot);
+  makeSnapshot() {
+    const snapshot = this.snap();
 
     this.addSnapshot(snapshot);
 
     return snapshot;
-  }
-
-  getSnapshots() {
-    return this._snapshots;
   }
 }
 

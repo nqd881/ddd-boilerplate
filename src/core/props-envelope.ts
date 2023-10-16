@@ -52,7 +52,9 @@ export class PropsEnvelope<P extends object> {
   }
 
   getPropsMetadata() {
-    return getPropsMetadata<typeof this>(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getPropsMetadata<typeof this>(prototype);
   }
 
   transformProps(props: P) {

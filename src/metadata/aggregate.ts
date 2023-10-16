@@ -1,20 +1,27 @@
-import { AggregateCommandHandler, AggregateEventApplier, AnyAggregate } from '#core/aggregate';
+import { AggregateCommandHandler, AggregateEventApplier } from '#core/aggregate';
+import { AnyCommand } from '#core/command';
 import { AnyDomainEvent } from '#core/domain-event';
 import {
   AGGREGATE_COMMANDS_METADATA,
   AGGREGATE_EVENTS_METADATA,
   AGGREGATE_TYPE,
 } from './constants';
-import { AnyCommand } from '#core/command';
+import { AggregateTypeHasNotBeenSetError } from './errors';
 
+// Aggregate Type
 export const defineAggregateType = (target: object, aggregateType: string) => {
   Reflect.defineMetadata(AGGREGATE_TYPE, aggregateType, target);
 };
 
 export const getAggregateType = (target: object): string => {
-  return Reflect.getMetadata(AGGREGATE_TYPE, target);
+  const aggregateType = Reflect.getMetadata(AGGREGATE_TYPE, target);
+
+  if (!aggregateType) throw new AggregateTypeHasNotBeenSetError();
+
+  return aggregateType;
 };
 
+// Aggregate Event Applier
 export const getAggregateEventAppliersMap = <E extends AnyDomainEvent>(
   target: object,
 ): Map<string, AggregateEventApplier<E>> => {
@@ -50,6 +57,7 @@ export const getAggregateEventApplier = (target: object | null, eventType: strin
   return null;
 };
 
+// Aggregate Command Handler
 export const getAggregateCommandHandlersMap = <C extends AnyCommand>(
   target: object,
 ): Map<string, AggregateCommandHandler<C>> => {

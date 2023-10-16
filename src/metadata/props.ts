@@ -4,6 +4,7 @@ import { PROPS_METADATA } from './constants';
 import { ClassTransformOptions } from 'class-transformer';
 import { ValidatorOptions } from 'class-validator';
 import 'reflect-metadata';
+import { PropsMetadataHasNotBeenSetError } from './errors';
 
 export interface PropsOptions {
   validatorOptions?: ValidatorOptions;
@@ -25,5 +26,9 @@ export const definePropsMetadata = <T extends AnyPropsEnvelope>(
 export const getPropsMetadata = <T extends AnyPropsEnvelope>(
   target: object,
 ): PropsMetadata<GetProps<T>> => {
-  return Reflect.getMetadata(PROPS_METADATA, target);
+  const propsMetadata = Reflect.getMetadata(PROPS_METADATA, target);
+
+  if (!propsMetadata) throw new PropsMetadataHasNotBeenSetError();
+
+  return propsMetadata;
 };

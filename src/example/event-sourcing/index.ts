@@ -38,9 +38,10 @@ studentX.processCommand(
   }),
 );
 
-const initialStudentX = studentX.getSnapshots()[0];
+const initialStudentX = studentX.snapshots[0];
 
-console.log(studentX.events[0].toObject());
-console.log(studentX.events);
+// console.log(studentX.events[0].toObject());
+// console.log(studentX.events);
+console.log(studentX);
 console.log(studentX.toObject());
-console.log(initialStudentX.toObject());
+// console.log(initialStudentX.toObject());

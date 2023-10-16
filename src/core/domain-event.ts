@@ -38,7 +38,9 @@ export class DomainEventBase<P extends object> extends PropsEnvelopeWithId<P> {
     id?: string,
     correlationId?: string,
   ) {
-    id = id ?? generateUUIDWithPrefix(getDomainEventType(this.prototype));
+    const eventType = getDomainEventType(this.prototype);
+
+    id = id ?? generateUUIDWithPrefix(eventType);
 
     return new this(id, aggregate, Date.now(), props, correlationId);
   }

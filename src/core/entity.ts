@@ -14,13 +14,17 @@ export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
   }
 
   static initEntity<T extends AnyEntity>(this: EntityClass<T>, props?: GetProps<T>, id?: string) {
-    id = id ?? generateUUIDWithPrefix(getEntityType(this.prototype));
+    const entityType = getEntityType(this.prototype);
+
+    id = id ?? generateUUIDWithPrefix(entityType);
 
     return new this(id, props);
   }
 
   getEntityType() {
-    return getEntityType(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getEntityType(prototype);
   }
 
   equalsType(entity: EntityBase<P>) {

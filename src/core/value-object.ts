@@ -14,7 +14,9 @@ export class ValueObjectBase<P extends object> extends PropsEnvelope<P> {
   }
 
   getValueObjectType() {
-    return getValueObjectType(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getValueObjectType(prototype);
   }
 
   @ToObject()

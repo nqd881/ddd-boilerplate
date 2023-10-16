@@ -4,6 +4,12 @@ export class NonNegativeVersionError extends Error {
   }
 }
 
+export class PastEventCannotBeAddedError extends Error {
+  constructor() {
+    super('Past event cannot be added once a new event has been added');
+  }
+}
+
 export class EventApplierNotFoundError extends Error {
   constructor(eventType: string) {
     super(`Not found event applier for event with type ${eventType}`);
