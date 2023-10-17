@@ -20,6 +20,7 @@ import {
   InvalidEventAggregateVersionError,
   NonNegativeVersionError,
   PastEventCannotBeAddedError,
+  UnableStoreSnapshotError,
 } from './errors/aggregate';
 import { GetProps } from './props-envelope';
 
@@ -258,8 +259,14 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     if (!this._initialSnapshot) this._initialSnapshot = initialSnapshot;
   }
 
-  addSnapshot(snapshot: typeof this) {
+  storeSnapshot(snapshot: typeof this) {
     if (!this._snapshots) this._snapshots = [];
+
+    const snapshotVersion = snapshot.getLastEventVersion();
+    const lastSnapshotVersion = this.snapshots.at(-1)?.getLastEventVersion();
+
+    if (lastSnapshotVersion && snapshotVersion <= lastSnapshotVersion)
+      throw new UnableStoreSnapshotError();
 
     this._snapshots.push(snapshot);
   }
@@ -267,7 +274,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   makeSnapshot() {
     const snapshot = this.snap();
 
-    this.addSnapshot(snapshot);
+    this.storeSnapshot(snapshot);
 
     return snapshot;
   }

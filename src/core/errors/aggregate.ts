@@ -45,3 +45,11 @@ export class InvalidEventAggregateVersionError extends Error {
     );
   }
 }
+
+export class UnableStoreSnapshotError extends Error {
+  constructor() {
+    super(
+      'Can only store snapshot whose last event version is greater than the last event version of the last snapshot stored',
+    );
+  }
+}
