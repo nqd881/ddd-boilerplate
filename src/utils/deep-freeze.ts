@@ -2,10 +2,8 @@ import { isObject } from 'lodash';
 
 export const deepFreeze = <T extends object>(obj: T) => {
   Object.keys(obj).forEach((prop) => {
-    let p = prop as keyof T;
-
-    if (isObject(obj[p]) && !Object.isFrozen(obj[p])) {
-      deepFreeze(obj[p] as object);
+    if (isObject(obj[prop]) && !Object.isFrozen(obj[prop])) {
+      deepFreeze(obj[prop] as object);
     }
   });
 

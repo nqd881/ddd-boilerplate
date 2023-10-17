@@ -1,5 +1,4 @@
 export const AGGREGATE_TYPE = '__aggregate_type__';
-export const AGGREGATE_STYLE = '__aggregate_style__';
 export const ENTITY_TYPE = '__entity_type__';
 export const VALUE_OBJECT_TYPE = '__value_object_type__';
 export const DOMAIN_EVENT_TYPE = '__domain_event_type__';

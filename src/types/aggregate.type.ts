@@ -14,3 +14,5 @@ export type AggregateClass<T extends AnyAggregate> = Class<T, AggregateConstruct
   ClassTypeWithoutConstructorAndPrototype<typeof AggregateBase<GetProps<T>>>;
 
 export type AggregateClassWithProps<P extends object> = AggregateClass<AggregateBase<P>>;
+
+export type AnyAggregateClass = AggregateClass<AnyAggregate>;

@@ -15,3 +15,5 @@ export type CommandClass<T extends AnyCommand> = Class<T, CommandConstructorPara
   ClassTypeWithoutConstructorAndPrototype<typeof CommandBase<GetProps<T>>>;
 
 export type CommandClassWithProps<P extends object> = CommandClass<CommandBase<P>>;
+
+export type AnyCommandClass = CommandClass<AnyCommand>;

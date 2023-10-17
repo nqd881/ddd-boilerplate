@@ -1,5 +1,9 @@
+import { AnyValueObjectClass } from '#types/value-object.type';
 import { VALUE_OBJECT_TYPE } from './constants';
 import { ValueObjectTypeHasNotBeenSetError } from './errors';
+import { Registry } from './registry';
+
+export const ValueObjectRegistry = new Registry<AnyValueObjectClass>();
 
 export const defineValueObjectType = (target: object, eventType: string) => {
   Reflect.defineMetadata(VALUE_OBJECT_TYPE, eventType, target);

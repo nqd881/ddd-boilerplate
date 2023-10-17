@@ -1,12 +1,16 @@
 import { AggregateCommandHandler, AggregateEventApplier } from '#core/aggregate';
 import { AnyCommand } from '#core/command';
 import { AnyDomainEvent } from '#core/domain-event';
+import { AnyAggregateClass } from '#types/aggregate.type';
 import {
   AGGREGATE_COMMANDS_METADATA,
   AGGREGATE_EVENTS_METADATA,
   AGGREGATE_TYPE,
 } from './constants';
 import { AggregateTypeHasNotBeenSetError } from './errors';
+import { Registry } from './registry';
+
+export const AggregateRegistry = new Registry<AnyAggregateClass>();
 
 // Aggregate Type
 export const defineAggregateType = (target: object, aggregateType: string) => {

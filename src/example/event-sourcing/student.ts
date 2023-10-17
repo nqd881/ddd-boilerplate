@@ -9,11 +9,12 @@ import { User, UserProps } from './user';
 import { Vehicle } from './vehicle';
 import { ToObject } from '#decorators/to-object';
 
-@ToObject()
+@ToObject({ groups: ['toJson'] })
 export class StudentProps extends UserProps {
   @Min(5)
   grade: number;
 
+  // @ToObject({ groups: ['toJson'] })
   vehicle?: Vehicle;
 }
 

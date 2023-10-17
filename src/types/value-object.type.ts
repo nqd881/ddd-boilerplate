@@ -14,3 +14,5 @@ export type ValueObjectClass<T extends AnyValueObject> = Class<T, ValueObjectCon
   ClassTypeWithoutConstructorAndPrototype<typeof ValueObjectBase<GetProps<T>>>;
 
 export type ValueObjectClassWithProps<P extends object> = ValueObjectClass<ValueObjectBase<P>>;
+
+export type AnyValueObjectClass = ValueObjectClass<AnyValueObject>;

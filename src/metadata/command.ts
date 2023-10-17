@@ -1,5 +1,9 @@
+import { AnyCommandClass } from '#types/command.type';
 import { COMMAND_TYPE } from './constants';
 import { CommandTypeHasNotBeenSetError } from './errors';
+import { Registry } from './registry';
+
+export const CommandRegistry = new Registry<AnyCommandClass>();
 
 export const defineCommandType = (target: object, commandType: string) => {
   Reflect.defineMetadata(COMMAND_TYPE, commandType, target);

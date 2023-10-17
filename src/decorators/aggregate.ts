@@ -3,6 +3,7 @@ import { AnyCommand } from '#core/command';
 import { AnyDomainEvent } from '#core/domain-event';
 import { GetProps } from '#core/props-envelope';
 import {
+  AggregateRegistry,
   defineAggregateCommandHandler,
   defineAggregateEventApplier,
   defineAggregateType,
@@ -29,6 +30,8 @@ export const Aggregate = <A extends AnyAggregate>(
     definePropsMetadata(target.prototype, { propsClass, propsOptions });
     defineAggregateType(target.prototype, aggregateType);
     defineEntityType(target.prototype, aggregateType);
+
+    AggregateRegistry.register(aggregateType, target);
   };
 };
 

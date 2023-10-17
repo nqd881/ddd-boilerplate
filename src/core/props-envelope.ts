@@ -1,4 +1,4 @@
-import { ToObject } from '#decorators/to-object';
+import { ToObject, ToObjectGroup } from '#decorators/to-object';
 import { getPropsMetadata } from '#metadata/props';
 import { ClassTransformOptions, instanceToPlain, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
@@ -9,6 +9,7 @@ import {
   UpdateImmutablePropsError,
   ValidatePropsFailedError,
 } from './errors/props';
+import { deepFreeze } from '#utils/deep-freeze';
 
 export type PropsUpdateFn = () => void;
 
@@ -37,7 +38,11 @@ export class PropsEnvelope<P extends object> {
   init(props: P) {
     if (this.isInitialized()) return;
 
-    this.setProps(this.makeProps(props));
+    props = this.makeProps(props);
+
+    if (this.immutable) props = deepFreeze(props);
+
+    this.setProps(props);
   }
 
   @ToObject()
@@ -110,6 +115,7 @@ export class PropsEnvelope<P extends object> {
   toObject(options?: ClassTransformOptions) {
     return instanceToPlain(this, {
       strategy: 'excludeAll',
+      groups: [ToObjectGroup],
       ...options,
     });
   }

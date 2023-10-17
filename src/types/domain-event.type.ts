@@ -14,3 +14,5 @@ export type DomainEventClass<T extends AnyDomainEvent> = Class<T, DomainEventCon
   ClassTypeWithoutConstructorAndPrototype<typeof DomainEventBase<GetProps<T>>>;
 
 export type DomainEventClassWithProps<P extends object> = DomainEventClass<DomainEventBase<P>>;
+
+export type AnyDomainEventClass = DomainEventClass<AnyDomainEvent>;

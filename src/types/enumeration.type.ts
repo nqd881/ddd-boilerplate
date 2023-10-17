@@ -8,3 +8,5 @@ export type EnumerationClass<T extends AnyEnumeration> = Class<T, EnumerationCon
   ClassTypeWithoutConstructorAndPrototype<typeof EnumerationBase> & {
     [key in keyof T]?: T;
   };
+
+export type AnyEnumerationClass = EnumerationClass<AnyEnumeration>;

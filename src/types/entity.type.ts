@@ -15,3 +15,5 @@ export type EntityClass<T extends AnyEntity> = Class<T, EntityConstructorParams<
   ClassTypeWithoutConstructorAndPrototype<typeof EntityBase<GetProps<T>>>;
 
 export type EntityClassWithProps<P extends object> = EntityClass<EntityBase<P>>;
+
+export type AnyEntityClass = EntityClass<AnyEntity>;
