@@ -11,7 +11,6 @@ import _ from 'lodash';
 import { deepFreeze, generateUUIDWithPrefix } from 'src/utils';
 import { AnyCommand } from './command';
 import { AnyDomainEvent } from './domain-event';
-import { EntityBase } from './entity';
 import {
   CommandHandlerNotFoundError,
   EventApplierNotFoundError,
@@ -22,23 +21,25 @@ import {
   PastEventCannotBeAddedError,
   UnableStoreSnapshotError,
 } from './errors/aggregate';
-import { GetProps } from './props-envelope';
+import { GetProps, PropsEnvelope } from './props-envelope';
 
-export class AggregateBase<P extends object> extends EntityBase<P> {
-  protected readonly _originalVersion: number;
+@ToObject()
+export class AggregateMetadata {
+  id: string;
+  originalVersion: number;
+  loaded: boolean;
+}
+
+export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMetadata, P> {
   protected _pastEvents: AnyDomainEvent[] = [];
   protected _events: AnyDomainEvent[] = [];
   protected _initialSnapshot: typeof this;
   protected _snapshots: (typeof this)[] = [];
-  protected _loaded: boolean;
 
-  constructor(id: string, originalVersion: number, loaded: boolean, props?: P) {
-    super(id, props);
+  constructor(metadata: AggregateMetadata, props?: P) {
+    if (metadata.originalVersion < 0) throw new NonNegativeVersionError();
 
-    if (originalVersion < 0) throw new NonNegativeVersionError();
-
-    this._originalVersion = originalVersion;
-    this._loaded = loaded;
+    super(metadata, props);
   }
 
   static isAggregate(obj: object): obj is AggregateBase<any> {
@@ -54,7 +55,14 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
 
     id = id ?? generateUUIDWithPrefix(aggregateType);
 
-    return new this(id, 0, false, props);
+    return new this(
+      {
+        id,
+        originalVersion: 0,
+        loaded: false,
+      },
+      props,
+    );
   }
 
   static loadAggregate<A extends AnyAggregate>(
@@ -63,7 +71,14 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     originalVersion: number,
     props: GetProps<A>,
   ) {
-    return new this(id, originalVersion, true, props);
+    return new this(
+      {
+        id,
+        originalVersion,
+        loaded: true,
+      },
+      props,
+    );
   }
 
   static loadAggregateFromSnapshot<A extends AnyAggregate>(
@@ -80,12 +95,13 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     return aggregate;
   }
 
-  init(props: P): void {
-    super.init(props);
+  initProps(props: P): void {
+    super.initProps(props);
 
     this.makeInitialSnapshot();
   }
 
+  @ToObject({ name: 'aggregateType', isMetadata: true })
   getAggregateType() {
     const prototype = Object.getPrototypeOf(this);
 
@@ -93,22 +109,19 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   }
 
   isNew() {
-    return this._originalVersion === 0 && !this._loaded;
+    return this.originalVersion === 0 && !this.loaded;
   }
 
-  @ToObject()
-  get aggregateType() {
-    return this.getAggregateType();
+  get id() {
+    return this.metadata.id;
   }
 
-  @ToObject()
   get originalVersion() {
-    return this._originalVersion;
+    return this.metadata.originalVersion;
   }
 
-  @ToObject()
   get loaded() {
-    return this._loaded;
+    return this.metadata.loaded;
   }
 
   get pastEvents() {
@@ -163,7 +176,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     );
   }
 
-  @ToObject({ name: 'eventVersion' })
+  @ToObject({ name: 'eventVersion', isMetadata: true })
   getLastEventVersion() {
     const lastEvent = this.hasEvents() ? this._events.at(-1) : this._pastEvents.at(-1);
 
@@ -197,7 +210,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   }
 
   applyEvent<E extends AnyDomainEvent>(event: E, fromHistory = false) {
-    const eventType = event.eventType;
+    const eventType = event.getEventType();
 
     const applier = this.getEventApplier(eventType);
 
@@ -228,7 +241,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
   }
 
   processCommand<C extends AnyCommand>(command: C) {
-    const commandType = command.commandType;
+    const commandType = command.getCommandType();
 
     const handler = this.getCommandHandler(commandType);
 
@@ -237,7 +250,7 @@ export class AggregateBase<P extends object> extends EntityBase<P> {
     const events = toArray(handler(command));
 
     events.forEach((event) => {
-      if (command.correlationId) event.setCorrelationId(command.correlationId);
+      // if (command.correlationId) event.setCorrelationId(command.correlationId);
 
       this.applyEvent(event);
     });

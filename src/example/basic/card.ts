@@ -1,8 +1,8 @@
 import { EntityBase } from '#core/entity';
 import { Entity } from '#decorators/entity';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 
-@ToObject()
+@Props()
 export class CardProps {
   name: string;
   group: string;

@@ -1,5 +1,4 @@
 import { Account } from './account';
-import { AccountStatus } from './account-status';
 import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
@@ -35,3 +34,4 @@ account.changePassword(
 );
 
 console.log(account.toObject());
+console.log(account.toObject().props.password);

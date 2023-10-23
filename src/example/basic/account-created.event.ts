@@ -1,8 +1,8 @@
 import { DomainEventBase } from '#core/domain-event';
 import { DomainEvent } from '#decorators/domain-event';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 
-@ToObject()
+@Props()
 export class AccountCreatedEventProps {
   accountId: string;
   username: string;

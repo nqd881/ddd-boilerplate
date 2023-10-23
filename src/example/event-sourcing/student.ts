@@ -3,18 +3,17 @@ import { DomainEventBase } from '#core/domain-event';
 import { Aggregate, ApplyEvent, ProcessCommand } from '#decorators/aggregate';
 import { Command } from '#decorators/command';
 import { DomainEvent } from '#decorators/domain-event';
-import { Expose, Type } from 'class-transformer';
+import { Props } from '#decorators/props';
+import { Type } from 'class-transformer';
 import { Min } from 'class-validator';
 import { User, UserProps } from './user';
 import { Vehicle } from './vehicle';
-import { ToObject } from '#decorators/to-object';
 
-@ToObject({ groups: ['toJson'] })
+@Props()
 export class StudentProps extends UserProps {
   @Min(5)
   grade: number;
 
-  // @ToObject({ groups: ['toJson'] })
   vehicle?: Vehicle;
 }
 
@@ -30,7 +29,7 @@ export class CreateStudentCommand extends CommandBase<CreateStudentCommandProps>
   }
 }
 
-@ToObject()
+@Props()
 export class StudentCreatedEventProps {
   name: string;
   age: number;
@@ -103,7 +102,7 @@ export class Student extends User<StudentProps> {
 
   @ApplyEvent(StudentCreatedEvent)
   applyCreate(event: StudentCreatedEvent) {
-    this.init({
+    this.initProps({
       name: event.name,
       age: event.age,
       grade: event.grade,

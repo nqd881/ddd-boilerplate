@@ -1,18 +1,20 @@
 import { ToObject } from '#decorators/to-object';
 import { getCommandType } from '#metadata/command';
 import { CommandClass } from '#types/command.type';
-import { generateUUIDWithPrefix } from 'src/utils';
-import { GetProps, PropsEnvelopeWithId } from './props-envelope';
+import { generateUUIDWithPrefix } from '#utils/id';
+import { GetProps, PropsEnvelope } from './props-envelope';
 
-export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
-  private readonly _timestamp: number;
-  private _correlationId?: string;
+@ToObject()
+export class CommandMetadata {
+  id: string;
+  timestamp: number;
+  correlationId?: string;
+  causationId?: string;
+}
 
-  constructor(id: string, timestamp: number, props: P, correlationId?: string) {
-    super(id, props, true);
-
-    this._timestamp = timestamp;
-    this._correlationId = correlationId;
+export class CommandBase<P extends object> extends PropsEnvelope<CommandMetadata, P> {
+  constructor(metadata: CommandMetadata, props: P) {
+    super(metadata, props, true);
   }
 
   static newCommand<C extends AnyCommand>(
@@ -20,39 +22,44 @@ export class CommandBase<P extends object> extends PropsEnvelopeWithId<P> {
     props: GetProps<C>,
     id?: string,
     correlationId?: string,
+    causationId?: string,
   ) {
     const commandType = getCommandType(this.prototype);
 
     id = id ?? generateUUIDWithPrefix(commandType);
 
-    return new this(id, Date.now(), props, correlationId);
+    return new this(
+      {
+        id,
+        timestamp: Date.now(),
+        correlationId,
+        causationId,
+      },
+      props,
+    );
   }
 
+  @ToObject({ name: 'commandType', isMetadata: true })
   getCommandType() {
     const prototype = Object.getPrototypeOf(this);
 
     return getCommandType(prototype);
   }
 
-  setCorrelationId(correlationId: string) {
-    if (this._correlationId) return;
-
-    this._correlationId = correlationId;
+  get id() {
+    return this.metadata.id;
   }
 
-  @ToObject()
-  get commandType() {
-    return this.getCommandType();
-  }
-
-  @ToObject()
   get timestamp() {
-    return this._timestamp;
+    return this.metadata.timestamp;
   }
 
-  @ToObject()
   get correlationId() {
-    return this._correlationId;
+    return this.metadata?.correlationId;
+  }
+
+  get causationId() {
+    return this.metadata?.causationId;
   }
 }
 

@@ -1,8 +1,8 @@
 import { ValueObjectBase } from '#core/value-object';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 import { ValueObject } from '#decorators/value-object';
 
-@ToObject()
+@Props()
 export class PasswordProps {
   value: string;
   hashed: boolean;

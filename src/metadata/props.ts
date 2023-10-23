@@ -1,34 +1,35 @@
 import { AnyPropsEnvelope, GetProps } from '#core/props-envelope';
 import { Class } from 'type-fest';
-import { PROPS_METADATA } from './constants';
+import { PROPS_CLASS, PROPS_OPTIONS } from './constants';
 import { ClassTransformOptions } from 'class-transformer';
 import { ValidatorOptions } from 'class-validator';
 import 'reflect-metadata';
-import { PropsMetadataHasNotBeenSetError } from './errors';
+import { PropsClassHasNotBeenSetError } from './errors';
 
 export interface PropsOptions {
   validatorOptions?: ValidatorOptions;
   transformOptions?: ClassTransformOptions;
 }
 
-export interface PropsMetadata<P> {
-  propsClass: Class<P>;
-  propsOptions?: PropsOptions;
-}
-
-export const definePropsMetadata = <T extends AnyPropsEnvelope>(
+export const definePropsClass = <T extends AnyPropsEnvelope>(
   target: object,
-  metadata: PropsMetadata<GetProps<T>>,
+  propsClass: Class<GetProps<T>>,
 ) => {
-  Reflect.defineMetadata(PROPS_METADATA, metadata, target);
+  Reflect.defineMetadata(PROPS_CLASS, propsClass, target);
 };
 
-export const getPropsMetadata = <T extends AnyPropsEnvelope>(
-  target: object,
-): PropsMetadata<GetProps<T>> => {
-  const propsMetadata = Reflect.getMetadata(PROPS_METADATA, target);
+export const getPropsClass = <T extends AnyPropsEnvelope>(target: object): Class<GetProps<T>> => {
+  const propsClass = Reflect.getMetadata(PROPS_CLASS, target);
 
-  if (!propsMetadata) throw new PropsMetadataHasNotBeenSetError();
+  if (!propsClass) throw new PropsClassHasNotBeenSetError();
 
-  return propsMetadata;
+  return propsClass;
+};
+
+export const definePropsOptions = (target: object, options: PropsOptions) => {
+  Reflect.defineMetadata(PROPS_OPTIONS, options, target);
+};
+
+export const getPropsOptions = (target: object): PropsOptions => {
+  return Reflect.getMetadata(PROPS_OPTIONS, target) || {};
 };

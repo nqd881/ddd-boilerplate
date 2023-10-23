@@ -8,3 +8,4 @@ export * from './enumeration';
 export * from './value-object';
 
 export * from './to-object';
+export * from './props';

@@ -21,15 +21,11 @@ export class EnumerationBase {
     return properties.map((name) => (this as any)[name]).filter((value) => value instanceof this);
   }
 
+  @ToObject({ name: 'enumerationType' })
   getEnumerationType() {
     const prototype = Object.getPrototypeOf(this);
 
     return getEnumerationType(prototype);
-  }
-
-  @ToObject()
-  get enumerationType() {
-    return this.getEnumerationType();
   }
 
   @ToObject()

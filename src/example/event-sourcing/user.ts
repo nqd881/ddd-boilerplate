@@ -4,7 +4,7 @@ import { DomainEventBase } from '#core/domain-event';
 import { Aggregate, ApplyEvent, ProcessCommand } from '#decorators/aggregate';
 import { Command } from '#decorators/command';
 import { DomainEvent } from '#decorators/domain-event';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 import { Transform } from 'class-transformer';
 
 export class ChangeNameCommandProps {
@@ -29,7 +29,7 @@ export class NameChangedEvent extends DomainEventBase<NameChangedEventProps> {
   }
 }
 
-@ToObject()
+@Props()
 export class UserProps {
   @Transform(
     ({ value }) => {

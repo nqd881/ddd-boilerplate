@@ -1,9 +1,10 @@
-import { AnyEnumerationClass } from '#types/enumeration.type';
+import { AnyEnumeration } from '#core/enumeration';
+import { Class } from 'type-fest';
 import { ENUMERATION_TYPE } from './constants';
 import { EnumerationTypeHasNotBeenSetError } from './errors';
 import { Registry } from './registry';
 
-export const EnumerationRegistry = new Registry<AnyEnumerationClass>();
+export const EnumerationRegistry = new Registry<Class<AnyEnumeration>>();
 
 export const defineEnumerationType = (target: object, eventType: string) => {
   Reflect.defineMetadata(ENUMERATION_TYPE, eventType, target);

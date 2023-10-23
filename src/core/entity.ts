@@ -1,12 +1,17 @@
+import { ToObject } from '#decorators/to-object';
 import { getEntityType } from '#metadata/entity';
 import { EntityClass } from '#types/entity.type';
-import { generateUUIDWithPrefix } from 'src/utils';
-import { GetProps, PropsEnvelopeWithId } from './props-envelope';
-import { ToObject } from '#decorators/to-object';
+import { generateUUIDWithPrefix } from '#utils/id';
+import { GetProps, PropsEnvelope } from './props-envelope';
 
-export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
-  constructor(id: string, props?: P) {
-    super(id, props);
+@ToObject()
+export class EntityMetadata {
+  id: string;
+}
+
+export class EntityBase<P extends object> extends PropsEnvelope<EntityMetadata, P> {
+  constructor(metadata: EntityMetadata, props?: P) {
+    super(metadata, props);
   }
 
   static isEntity(obj: object): obj is AnyEntity {
@@ -18,9 +23,10 @@ export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
 
     id = id ?? generateUUIDWithPrefix(entityType);
 
-    return new this(id, props);
+    return new this({ id }, props);
   }
 
+  @ToObject({ name: 'entityType', isMetadata: true })
   getEntityType() {
     const prototype = Object.getPrototypeOf(this);
 
@@ -34,12 +40,11 @@ export class EntityBase<P extends object> extends PropsEnvelopeWithId<P> {
   equals(entity: EntityBase<P>) {
     if (!this.equalsType(entity)) return false;
 
-    return this.hasId(entity.id);
+    return this.id === entity.id;
   }
 
-  @ToObject()
-  get entityType() {
-    return this.getEntityType();
+  get id() {
+    return this.metadata.id;
   }
 }
 

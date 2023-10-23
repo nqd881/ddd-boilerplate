@@ -1,8 +1,8 @@
 import { EntityBase } from '#core/entity';
 import { Entity } from '#decorators/entity';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 
-@ToObject()
+@Props()
 export class VehicleProps {
   type: string;
   color: string;
@@ -10,12 +10,10 @@ export class VehicleProps {
 
 @Entity(VehicleProps)
 export class Vehicle extends EntityBase<VehicleProps> {
-  // @ToObject()
   get type() {
     return this.props.type;
   }
 
-  // @ToObject()
   get color() {
     return this.props.color;
   }

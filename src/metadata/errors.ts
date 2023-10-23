@@ -34,8 +34,14 @@ export class ValueObjectTypeHasNotBeenSetError extends HasNotBeenSetError {
   }
 }
 
-export class PropsMetadataHasNotBeenSetError extends HasNotBeenSetError {
+export class PropsClassHasNotBeenSetError extends HasNotBeenSetError {
   constructor() {
-    super('props metadata');
+    super('props class');
+  }
+}
+
+export class MetadataClassHasNotBeenSetError extends HasNotBeenSetError {
+  constructor() {
+    super('metadata class');
   }
 }

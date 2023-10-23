@@ -1,27 +1,23 @@
+import { ToObject } from '#decorators/to-object';
+import { getValueObjectType } from '#metadata/value-object';
 import { ValueObjectClassWithProps } from '#types/value-object.type';
 import _ from 'lodash';
 import { PropsEnvelope } from './props-envelope';
-import { getValueObjectType } from '#metadata/value-object';
-import { ToObject } from '#decorators/to-object';
 
-export class ValueObjectBase<P extends object> extends PropsEnvelope<P> {
+export class ValueObjectBase<P extends object> extends PropsEnvelope<{}, P> {
   constructor(props: P) {
-    super(props, true);
+    super({}, props, true);
   }
 
   static isValueObject(obj: any) {
     return obj instanceof ValueObjectBase;
   }
 
+  @ToObject({ name: 'valueObjectType', isMetadata: true })
   getValueObjectType() {
     const prototype = Object.getPrototypeOf(this);
 
     return getValueObjectType(prototype);
-  }
-
-  @ToObject()
-  get valueObjectType() {
-    return this.getValueObjectType();
   }
 
   equalsType(obj: ValueObjectBase<P>) {

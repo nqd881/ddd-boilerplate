@@ -1,8 +1,7 @@
 import { ToObject, ToObjectGroup } from '#decorators/to-object';
-import { getPropsMetadata } from '#metadata/props';
 import { ClassTransformOptions, instanceToPlain, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import _ from 'lodash';
+import _, { isObject } from 'lodash';
 import {
   PropsClassNotFoundError,
   UninitializedError,
@@ -10,17 +9,29 @@ import {
   ValidatePropsFailedError,
 } from './errors/props';
 import { deepFreeze } from '#utils/deep-freeze';
+import { dot, object } from 'dot-object';
+import { getPropsClass, getPropsOptions } from '#metadata/props';
+import { getMetadataClass } from '#metadata/metadata';
 
 export type PropsUpdateFn = () => void;
 
-export class PropsEnvelope<P extends object> {
+export type PlainObject = {
+  [key: string]: any;
+};
+
+export class PropsEnvelope<M extends object, P extends object> {
   private readonly _immutable: boolean;
+  private _metadata: M;
   private _props?: P;
 
-  constructor(props?: P, immutable: boolean = false) {
+  constructor(metadata: M, props?: P, immutable: boolean = false) {
     this._immutable = immutable;
 
-    if (props) this.init(props);
+    console.log(this.getMetadataClass());
+
+    this.initMetadata(metadata);
+
+    if (props) this.initProps(props);
   }
 
   static cloneProps<P extends object>(props: P) {
@@ -35,7 +46,7 @@ export class PropsEnvelope<P extends object> {
     this._props = props;
   }
 
-  init(props: P) {
+  initProps(props: P) {
     if (this.isInitialized()) return;
 
     props = this.makeProps(props);
@@ -43,6 +54,17 @@ export class PropsEnvelope<P extends object> {
     if (this.immutable) props = deepFreeze(props);
 
     this.setProps(props);
+  }
+
+  private initMetadata(metadata: M) {
+    const metadataClass = this.getMetadataClass();
+
+    this._metadata = plainToInstance(metadataClass, metadata);
+  }
+
+  @ToObject()
+  get metadata() {
+    return this._metadata;
   }
 
   @ToObject()
@@ -56,14 +78,27 @@ export class PropsEnvelope<P extends object> {
     return this._immutable;
   }
 
-  getPropsMetadata() {
+  getPropsClass() {
     const prototype = Object.getPrototypeOf(this);
 
-    return getPropsMetadata<typeof this>(prototype);
+    return getPropsClass<typeof this>(prototype);
+  }
+
+  getPropsOptions() {
+    const propsClass = this.getPropsClass();
+
+    return getPropsOptions(propsClass.prototype);
+  }
+
+  getMetadataClass() {
+    const prototype = Object.getPrototypeOf(this);
+
+    return getMetadataClass(prototype);
   }
 
   transformProps(props: P) {
-    const { propsClass, propsOptions } = this.getPropsMetadata();
+    const propsClass = this.getPropsClass();
+    const propsOptions = this.getPropsOptions();
 
     const cloneProps = PropsEnvelope.cloneProps(props);
 
@@ -77,7 +112,8 @@ export class PropsEnvelope<P extends object> {
   validateProps(props?: P) {
     if (!props) return;
 
-    const { propsClass, propsOptions } = this.getPropsMetadata();
+    const propsClass = this.getPropsClass();
+    const propsOptions = this.getPropsOptions();
 
     if (!(props instanceof propsClass)) props = this.transformProps(props);
 
@@ -112,34 +148,23 @@ export class PropsEnvelope<P extends object> {
     return PropsEnvelope.cloneProps(this._props);
   }
 
-  toObject(options?: ClassTransformOptions) {
-    return instanceToPlain(this, {
+  toObject(options?: ClassTransformOptions): PlainObject {
+    const obj = instanceToPlain(this, {
       strategy: 'excludeAll',
       groups: [ToObjectGroup],
       ...options,
     });
+
+    return object(dot(obj));
   }
 }
 
-export class PropsEnvelopeWithId<P extends object> extends PropsEnvelope<P> {
-  private readonly _id: string;
+export type AnyPropsEnvelope = PropsEnvelope<any, any>;
 
-  constructor(id: string, props?: P, immutable?: boolean) {
-    super(props, immutable);
+export type GetMetadata<T extends AnyPropsEnvelope> = T extends PropsEnvelope<infer M, any>
+  ? M
+  : never;
 
-    this._id = id;
-  }
-
-  @ToObject()
-  get id() {
-    return this._id;
-  }
-
-  hasId(id: string) {
-    return this._id === id;
-  }
-}
-
-export type AnyPropsEnvelope = PropsEnvelope<any>;
-
-export type GetProps<T extends AnyPropsEnvelope> = T extends PropsEnvelope<infer P> ? P : never;
+export type GetProps<T extends AnyPropsEnvelope> = T extends PropsEnvelope<any, infer P>
+  ? P
+  : never;

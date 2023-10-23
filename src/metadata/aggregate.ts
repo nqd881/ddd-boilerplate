@@ -1,16 +1,16 @@
-import { AggregateCommandHandler, AggregateEventApplier } from '#core/aggregate';
+import { AggregateCommandHandler, AggregateEventApplier, AnyAggregate } from '#core/aggregate';
 import { AnyCommand } from '#core/command';
 import { AnyDomainEvent } from '#core/domain-event';
-import { AnyAggregateClass } from '#types/aggregate.type';
+import { Class } from 'type-fest';
 import {
-  AGGREGATE_COMMANDS_METADATA,
-  AGGREGATE_EVENTS_METADATA,
+  AGGREGATE_COMMANDS_HANDLERS,
+  AGGREGATE_EVENTS_APPLIERS,
   AGGREGATE_TYPE,
 } from './constants';
 import { AggregateTypeHasNotBeenSetError } from './errors';
 import { Registry } from './registry';
 
-export const AggregateRegistry = new Registry<AnyAggregateClass>();
+export const AggregateRegistry = new Registry<Class<AnyAggregate>>();
 
 // Aggregate Type
 export const defineAggregateType = (target: object, aggregateType: string) => {
@@ -30,7 +30,7 @@ export const getAggregateEventAppliersMap = <E extends AnyDomainEvent>(
   target: object,
 ): Map<string, AggregateEventApplier<E>> => {
   return (
-    Reflect.getMetadata(AGGREGATE_EVENTS_METADATA, target) ||
+    Reflect.getMetadata(AGGREGATE_EVENTS_APPLIERS, target) ||
     new Map<string, AggregateEventApplier<E>>()
   );
 };
@@ -44,7 +44,7 @@ export const defineAggregateEventApplier = <T extends AnyDomainEvent>(
 
   eventAppliersMap.set(eventType, applier as AggregateEventApplier<AnyDomainEvent>);
 
-  Reflect.defineMetadata(AGGREGATE_EVENTS_METADATA, eventAppliersMap, target);
+  Reflect.defineMetadata(AGGREGATE_EVENTS_APPLIERS, eventAppliersMap, target);
 };
 
 export const getAggregateEventApplier = (target: object | null, eventType: string) => {
@@ -66,7 +66,7 @@ export const getAggregateCommandHandlersMap = <C extends AnyCommand>(
   target: object,
 ): Map<string, AggregateCommandHandler<C>> => {
   return (
-    Reflect.getMetadata(AGGREGATE_COMMANDS_METADATA, target) ||
+    Reflect.getMetadata(AGGREGATE_COMMANDS_HANDLERS, target) ||
     new Map<string, AggregateCommandHandler<C>>()
   );
 };
@@ -80,7 +80,7 @@ export const defineAggregateCommandHandler = <C extends AnyCommand>(
 
   commandHandlersMap.set(commandType, handler as AggregateCommandHandler<AnyCommand>);
 
-  Reflect.defineMetadata(AGGREGATE_COMMANDS_METADATA, commandHandlersMap, target);
+  Reflect.defineMetadata(AGGREGATE_COMMANDS_HANDLERS, commandHandlersMap, target);
 };
 
 export const getAggregateCommandHandler = (target: object | null, commandType: string) => {

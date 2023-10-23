@@ -26,12 +26,14 @@
   "dependencies": {
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "dot-object": "^2.1.4",
     "lodash": "^4.17.21",
     "reflect-metadata": "^0.1.13",
     "type-fest": "^4.3.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@types/dot-object": "^2.1.4",
     "@types/lodash": "^4.14.198",
     "@types/uuid": "^9.0.2",
     "ts-node": "^10.9.1",

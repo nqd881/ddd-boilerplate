@@ -1,13 +1,13 @@
 import { AggregateBase } from '#core/aggregate';
 import { Aggregate } from '#decorators/aggregate';
-import { ToObject } from '#decorators/to-object';
+import { Props } from '#decorators/props';
 import { AccountCreatedEvent } from './account-created.event';
 import { AccountStatus } from './account-status';
 import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
 
-@ToObject()
+@Props()
 export class AccountProps {
   username: string;
   password: Password;
