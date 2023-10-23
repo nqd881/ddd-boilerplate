@@ -27,8 +27,6 @@ export class PropsEnvelope<M extends object, P extends object> {
   constructor(metadata: M, props?: P, immutable: boolean = false) {
     this._immutable = immutable;
 
-    console.log(this.getMetadataClass());
-
     this.initMetadata(metadata);
 
     if (props) this.initProps(props);
