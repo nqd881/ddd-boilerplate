@@ -3,13 +3,13 @@ import { Book } from './book';
 import { Card } from './card';
 import { Password } from './password';
 
-const bookA = Book.initEntity({
+const bookA = Book.newEntity({
   title: 'Book A',
   description: 'Description of book A',
   pagesCount: 100,
 });
 
-const cardX = Card.initEntity({
+const cardX = Card.newEntity({
   name: 'Card X',
   group: 'A',
 });
