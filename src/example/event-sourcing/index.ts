@@ -8,7 +8,7 @@ import {
 import { ChangeNameCommand } from './user';
 import { Vehicle } from './vehicle';
 
-const bikeX = Vehicle.initEntity({
+const bikeX = Vehicle.newEntity({
   type: 'bike',
   color: 'red',
 });
@@ -20,7 +20,7 @@ const studentXProps: StudentProps = {
   vehicle: bikeX,
 };
 
-const studentX = Student.initAggregate();
+const studentX = Student.newAggregate();
 
 studentX.processCommand(
   CreateStudentCommand.newCommand({

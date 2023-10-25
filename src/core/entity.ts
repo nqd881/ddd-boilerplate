@@ -31,7 +31,7 @@ export class EntityBase<P extends object> extends PropsEnvelope<EntityMetadata, 
     return obj instanceof EntityBase;
   }
 
-  static initEntity<T extends AnyEntity>(this: EntityClass<T>, props?: GetProps<T>, id?: string) {
+  static newEntity<T extends AnyEntity>(this: EntityClass<T>, props?: GetProps<T>, id?: string) {
     const entityType = getEntityType(this.prototype);
 
     id = id ?? generateUUIDWithPrefix(entityType);

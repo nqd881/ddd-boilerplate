@@ -67,7 +67,7 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
     return obj instanceof AggregateBase;
   }
 
-  static initAggregate<A extends AnyAggregate>(
+  static newAggregate<A extends AnyAggregate>(
     this: AggregateClass<A>,
     props?: GetProps<A>,
     id?: string,
