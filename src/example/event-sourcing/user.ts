@@ -7,28 +7,34 @@ import { DomainEvent } from '#decorators/domain-event';
 import { Props } from '#decorators/props';
 import { Transform } from 'class-transformer';
 
+@Props()
+export class CreateUserCommandProps {
+  name: string;
+  age: number;
+}
+
+@Command(CreateUserCommandProps, 'user.create')
+export class CreateUserCommand extends CommandBase<CreateUserCommandProps> {}
+
+//
+@Props()
 export class ChangeNameCommandProps {
   name: string;
 }
 
 @Command(ChangeNameCommandProps, 'user.change_name')
-export class ChangeNameCommand extends CommandBase<ChangeNameCommandProps> {
-  get name() {
-    return this.props.name;
-  }
-}
+export class ChangeNameCommand extends CommandBase<ChangeNameCommandProps> {}
 
+//
+@Props()
 export class NameChangedEventProps {
   newName: string;
 }
 
 @DomainEvent(NameChangedEventProps, 'user.name_changed')
-export class NameChangedEvent extends DomainEventBase<NameChangedEventProps> {
-  get newName() {
-    return this.props.newName;
-  }
-}
+export class NameChangedEvent extends DomainEventBase<NameChangedEventProps> {}
 
+//
 @Props()
 export class UserProps {
   @Transform(
@@ -53,17 +59,19 @@ export class User<P extends UserProps> extends AggregateBase<P> {
 
   @ProcessCommand(ChangeNameCommand)
   processChangeNameCommand(command: ChangeNameCommand) {
-    if (command.name === 'Vu') throw new Error('Cannot change name to Vu');
+    const { name } = command.getProps();
+
+    if (name === 'Vu') throw new Error('Cannot change name to Vu');
 
     return this.newEvent(NameChangedEvent, {
-      newName: command.name,
+      newName: name,
     });
   }
 
   @ApplyEvent(NameChangedEvent)
   applyNameChanged(event: NameChangedEvent) {
-    this.updateProps(() => {
-      this.props.name = event.newName;
-    });
+    const { newName } = event.getProps();
+
+    this.props.name = newName;
   }
 }

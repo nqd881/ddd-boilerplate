@@ -5,32 +5,82 @@ import { generateUUIDWithPrefix } from '#utils/id';
 import { Type } from 'class-transformer';
 import { GetProps, PropsEnvelope } from './props-envelope';
 
-@ToObject()
-export class DomainEventAggregate {
-  type: string;
+export interface IDomainEventMetadata {
   id: string;
-  version: number;
-}
-
-@ToObject()
-export class DomainEventMetadata {
-  id: string;
-
-  @Type(() => DomainEventAggregate)
-  aggregate: DomainEventAggregate;
-
+  aggregateInfo: DomainEventAggregateInfo;
   timestamp: number;
   correlationId?: string;
   causationId?: string;
 }
+@ToObject()
+export class DomainEventAggregateInfo {
+  readonly type: string;
+  readonly id: string;
+  readonly version: number;
+}
+
+export class DomainEventMetadata implements IDomainEventMetadata {
+  private _id: string;
+
+  @Type(() => DomainEventAggregateInfo)
+  private _aggregateInfo: DomainEventAggregateInfo;
+
+  private _timestamp: number;
+  private _correlationId?: string;
+  private _causationId?: string;
+
+  constructor(metadata: IDomainEventMetadata) {
+    if (metadata) {
+      this._id = metadata.id;
+      this._aggregateInfo = metadata.aggregateInfo;
+      this._timestamp = metadata.timestamp;
+      this._correlationId = metadata.correlationId;
+      this._causationId = metadata.causationId;
+    }
+  }
+
+  @ToObject()
+  get id() {
+    return this._id;
+  }
+
+  @ToObject()
+  get aggregateInfo() {
+    return this._aggregateInfo;
+  }
+
+  @ToObject()
+  get timestamp() {
+    return this._timestamp;
+  }
+
+  @ToObject()
+  get correlationId() {
+    return this._correlationId;
+  }
+
+  @ToObject()
+  get causationId() {
+    return this._causationId;
+  }
+
+  setCorrelationId(correlationId: string) {
+    if (!this?._correlationId) this._correlationId = correlationId;
+  }
+
+  setCausationId(causationId: string) {
+    if (!this?._causationId) this._causationId = causationId;
+  }
+}
+
 export class DomainEventBase<P extends object> extends PropsEnvelope<DomainEventMetadata, P> {
-  constructor(metadata: DomainEventMetadata, props: P) {
-    super(metadata, props, true);
+  constructor(metadata: IDomainEventMetadata, props: P) {
+    super(new DomainEventMetadata(metadata), props, true);
   }
 
   static newEvent<E extends AnyDomainEvent>(
     this: DomainEventClass<E>,
-    aggregate: DomainEventAggregate,
+    aggregateInfo: DomainEventAggregateInfo,
     props: GetProps<E>,
     id?: string,
     correlationId?: string,
@@ -43,7 +93,7 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<DomainEvent
     return new this(
       {
         id,
-        aggregate,
+        aggregateInfo,
         timestamp: Date.now(),
         correlationId,
         causationId,
@@ -54,15 +104,17 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<DomainEvent
 
   @ToObject({ name: 'eventType', isMetadata: true })
   getEventType() {
-    return getDomainEventType(Object.getPrototypeOf(this));
+    const prototype = Object.getPrototypeOf(this);
+
+    return getDomainEventType(prototype);
   }
 
   get id() {
     return this.metadata.id;
   }
 
-  get aggregate() {
-    return this.metadata.aggregate;
+  get aggregateInfo() {
+    return this.metadata.aggregateInfo;
   }
 
   get timestamp() {
@@ -70,11 +122,11 @@ export class DomainEventBase<P extends object> extends PropsEnvelope<DomainEvent
   }
 
   get correlationId() {
-    return this.metadata?.correlationId;
+    return this.metadata.correlationId;
   }
 
   get causationId() {
-    return this.metadata?.causationId;
+    return this.metadata.causationId;
   }
 }
 

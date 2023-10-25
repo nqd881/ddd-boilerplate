@@ -9,12 +9,4 @@ export class VehicleProps {
 }
 
 @Entity(VehicleProps)
-export class Vehicle extends EntityBase<VehicleProps> {
-  get type() {
-    return this.props.type;
-  }
-
-  get color() {
-    return this.props.color;
-  }
-}
+export class Vehicle extends EntityBase<VehicleProps> {}

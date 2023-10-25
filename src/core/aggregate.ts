@@ -23,23 +23,44 @@ import {
 } from './errors/aggregate';
 import { GetProps, PropsEnvelope } from './props-envelope';
 
-@ToObject()
-export class AggregateMetadata {
+export interface IAggregateMetadata {
   id: string;
   originalVersion: number;
-  loaded: boolean;
+}
+
+export class AggregateMetadata implements IAggregateMetadata {
+  private _id: string;
+  private _originalVersion: number;
+
+  constructor(metadata?: IAggregateMetadata) {
+    if (metadata) {
+      this._id = metadata.id;
+      this._originalVersion = metadata.originalVersion;
+    }
+  }
+
+  @ToObject()
+  get id() {
+    return this._id;
+  }
+
+  @ToObject()
+  get originalVersion() {
+    return this._originalVersion;
+  }
 }
 
 export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMetadata, P> {
+  protected _handledCommands: AnyCommand[] = [];
   protected _pastEvents: AnyDomainEvent[] = [];
   protected _events: AnyDomainEvent[] = [];
   protected _initialSnapshot: typeof this;
   protected _snapshots: (typeof this)[] = [];
 
-  constructor(metadata: AggregateMetadata, props?: P) {
+  constructor(metadata: IAggregateMetadata, props?: P) {
     if (metadata.originalVersion < 0) throw new NonNegativeVersionError();
 
-    super(metadata, props);
+    super(new AggregateMetadata(metadata), props);
   }
 
   static isAggregate(obj: object): obj is AggregateBase<any> {
@@ -59,7 +80,6 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
       {
         id,
         originalVersion: 0,
-        loaded: false,
       },
       props,
     );
@@ -75,7 +95,6 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
       {
         id,
         originalVersion,
-        loaded: true,
       },
       props,
     );
@@ -108,10 +127,6 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
     return getAggregateType(prototype);
   }
 
-  isNew() {
-    return this.originalVersion === 0 && !this.loaded;
-  }
-
   get id() {
     return this.metadata.id;
   }
@@ -120,28 +135,28 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
     return this.metadata.originalVersion;
   }
 
-  get loaded() {
-    return this.metadata.loaded;
+  getHandledCommands() {
+    return this._handledCommands;
   }
 
-  get pastEvents() {
+  getPastEvents() {
     return this._pastEvents;
   }
 
-  get events() {
+  getEvents() {
     return this._events;
   }
 
-  get initialSnapshot() {
+  getInitialSnapshot() {
     return this._initialSnapshot;
   }
 
-  get snapshots() {
+  getSnapshots() {
     return this._snapshots;
   }
 
   hasEvents() {
-    return Boolean(this.events.length);
+    return Boolean(this._events.length);
   }
 
   clearEvents() {
@@ -180,7 +195,7 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
   getLastEventVersion() {
     const lastEvent = this.hasEvents() ? this._events.at(-1) : this._pastEvents.at(-1);
 
-    if (lastEvent) return lastEvent.aggregate.version;
+    if (lastEvent) return lastEvent.aggregateInfo.version;
 
     return this.originalVersion;
   }
@@ -190,13 +205,13 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
   }
 
   private validateEventBeforeApply<E extends AnyDomainEvent>(event: E) {
-    if (event.aggregate.type !== this.getAggregateType())
-      throw new InvalidEventAggregateTypeError();
+    const { type, id, version } = event.aggregateInfo;
 
-    if (event.aggregate.id !== this.id) throw new InvalidEventAggregateIdError();
+    if (type !== this.getAggregateType()) throw new InvalidEventAggregateTypeError();
 
-    if (event.aggregate.version !== this.getNextEventVersion())
-      throw new InvalidEventAggregateVersionError();
+    if (id !== this.id) throw new InvalidEventAggregateIdError();
+
+    if (version !== this.getNextEventVersion()) throw new InvalidEventAggregateVersionError();
   }
 
   getEventApplier(eventType: string) {
@@ -249,11 +264,16 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
 
     const events = toArray(handler(command));
 
+    const { correlationId, causationId } = command.metadata;
+
     events.forEach((event) => {
-      // if (command.correlationId) event.setCorrelationId(command.correlationId);
+      if (correlationId) event.metadata.setCorrelationId(correlationId);
+      if (causationId) event.metadata.setCausationId(causationId);
 
       this.applyEvent(event);
     });
+
+    this._handledCommands.push(command);
 
     return events;
   }
@@ -276,7 +296,7 @@ export class AggregateBase<P extends object> extends PropsEnvelope<AggregateMeta
     if (!this._snapshots) this._snapshots = [];
 
     const snapshotVersion = snapshot.getLastEventVersion();
-    const lastSnapshotVersion = this.snapshots.at(-1)?.getLastEventVersion();
+    const lastSnapshotVersion = this._snapshots.at(-1)?.getLastEventVersion();
 
     if (lastSnapshotVersion && snapshotVersion <= lastSnapshotVersion)
       throw new UnableStoreSnapshotError();

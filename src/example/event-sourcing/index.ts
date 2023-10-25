@@ -1,4 +1,10 @@
-import { ChangeGradeCommand, CreateStudentCommand, Student, StudentProps } from './student';
+import {
+  ChangeGradeCommand,
+  CreateStudentCommand,
+  CreateStudentCommandProps,
+  Student,
+  StudentProps,
+} from './student';
 import { ChangeNameCommand } from './user';
 import { Vehicle } from './vehicle';
 
@@ -18,7 +24,7 @@ const studentX = Student.initAggregate();
 
 studentX.processCommand(
   CreateStudentCommand.newCommand({
-    studentProps: studentXProps,
+    ...(studentXProps as CreateStudentCommandProps),
   }),
 );
 
@@ -38,6 +44,12 @@ studentX.processCommand(
   }),
 );
 
-console.log(studentX);
-console.log(studentX.toObject());
-console.log(studentX.initialSnapshot.toObject());
+console.log('Aggregate instance', studentX);
+console.log('Aggregate handled commands', studentX.getHandledCommands());
+console.log('Aggregate events', studentX.getEvents());
+console.log(
+  'Aggregate events to object',
+  studentX.getEvents().map((event) => event.toObject()),
+);
+console.log('Aggregate to object', studentX.toObject());
+console.log('Aggregate initialsnapshot to object', studentX.getInitialSnapshot().toObject());

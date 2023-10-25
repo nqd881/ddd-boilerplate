@@ -1,9 +1,9 @@
 import { AnyPropsEnvelope, GetProps } from '#core/props-envelope';
-import { Class } from 'type-fest';
-import { PROPS_CLASS, PROPS_OPTIONS } from './constants';
 import { ClassTransformOptions } from 'class-transformer';
 import { ValidatorOptions } from 'class-validator';
 import 'reflect-metadata';
+import { Class } from 'type-fest';
+import { PROPS_CLASS, PROPS_OPTIONS } from './constants';
 import { PropsClassHasNotBeenSetError } from './errors';
 
 export interface PropsOptions {

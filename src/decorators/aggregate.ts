@@ -1,9 +1,4 @@
-import {
-  AggregateCommandHandler,
-  AggregateEventApplier,
-  AggregateMetadata,
-  AnyAggregate,
-} from '#core/aggregate';
+import { AggregateCommandHandler, AggregateEventApplier, AnyAggregate } from '#core/aggregate';
 import { AnyCommand } from '#core/command';
 import { AnyDomainEvent } from '#core/domain-event';
 import { GetProps } from '#core/props-envelope';
@@ -15,7 +10,6 @@ import {
 } from '#metadata/aggregate';
 import { getCommandType } from '#metadata/command';
 import { getDomainEventType } from '#metadata/domain-event';
-import { defineMetadataClass } from '#metadata/metadata';
 import { definePropsClass } from '#metadata/props';
 import { AggregateClass } from '#types/aggregate.type';
 import { CommandClass } from '#types/command.type';
@@ -31,7 +25,6 @@ export const Aggregate = <A extends AnyAggregate>(
   return <U extends AggregateClass<A>>(target: U) => {
     aggregateType = aggregateType ?? target.name;
 
-    defineMetadataClass(target.prototype, AggregateMetadata);
     definePropsClass(target.prototype, propsClass);
     defineAggregateType(target.prototype, aggregateType);
 

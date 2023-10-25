@@ -8,7 +8,5 @@ export const ENUMERATION_TYPE = '__enumeration_type__';
 export const PROPS_CLASS = '__props_class__';
 export const PROPS_OPTIONS = '__props_options__';
 
-export const METADATA_CLASS = '__metadata_class__';
-
 export const AGGREGATE_EVENTS_APPLIERS = '__aggregate_events_metadata__';
 export const AGGREGATE_COMMANDS_HANDLERS = '__aggregate_commands_metadata__';

@@ -4,17 +4,59 @@ import { CommandClass } from '#types/command.type';
 import { generateUUIDWithPrefix } from '#utils/id';
 import { GetProps, PropsEnvelope } from './props-envelope';
 
-@ToObject()
-export class CommandMetadata {
+export interface ICommandMetadata {
   id: string;
   timestamp: number;
   correlationId?: string;
   causationId?: string;
 }
+export class CommandMetadata implements ICommandMetadata {
+  private _id: string;
+  private _timestamp: number;
+  private _correlationId?: string;
+  private _causationId?: string;
+
+  constructor(metadata: ICommandMetadata) {
+    if (metadata) {
+      this._id = metadata.id;
+      this._timestamp = metadata.timestamp;
+      this._correlationId = metadata.correlationId;
+      this._causationId = metadata.causationId;
+    }
+  }
+
+  @ToObject()
+  get id() {
+    return this._id;
+  }
+
+  @ToObject()
+  get timestamp() {
+    return this._timestamp;
+  }
+
+  @ToObject()
+  get correlationId() {
+    return this._correlationId;
+  }
+
+  @ToObject()
+  get causationId() {
+    return this._causationId;
+  }
+
+  setCorrelationId(correlationId: string) {
+    if (!this._correlationId) this._correlationId = correlationId;
+  }
+
+  setCausationId(causationId: string) {
+    if (!this._causationId) this._causationId = causationId;
+  }
+}
 
 export class CommandBase<P extends object> extends PropsEnvelope<CommandMetadata, P> {
-  constructor(metadata: CommandMetadata, props: P) {
-    super(metadata, props, true);
+  constructor(metadata: ICommandMetadata, props: P) {
+    super(new CommandMetadata(metadata), props, true);
   }
 
   static newCommand<C extends AnyCommand>(
@@ -48,18 +90,6 @@ export class CommandBase<P extends object> extends PropsEnvelope<CommandMetadata
 
   get id() {
     return this.metadata.id;
-  }
-
-  get timestamp() {
-    return this.metadata.timestamp;
-  }
-
-  get correlationId() {
-    return this.metadata?.correlationId;
-  }
-
-  get causationId() {
-    return this.metadata?.causationId;
   }
 }
 

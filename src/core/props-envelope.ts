@@ -1,17 +1,16 @@
 import { ToObject, ToObjectGroup } from '#decorators/to-object';
+import { getPropsClass, getPropsOptions } from '#metadata/props';
+import { deepFreeze } from '#utils/deep-freeze';
 import { ClassTransformOptions, instanceToPlain, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
-import _, { isObject } from 'lodash';
+import { dot, object } from 'dot-object';
+import _ from 'lodash';
 import {
   PropsClassNotFoundError,
   UninitializedError,
   UpdateImmutablePropsError,
   ValidatePropsFailedError,
 } from './errors/props';
-import { deepFreeze } from '#utils/deep-freeze';
-import { dot, object } from 'dot-object';
-import { getPropsClass, getPropsOptions } from '#metadata/props';
-import { getMetadataClass } from '#metadata/metadata';
 
 export type PropsUpdateFn = () => void;
 
@@ -27,7 +26,7 @@ export class PropsEnvelope<M extends object, P extends object> {
   constructor(metadata: M, props?: P, immutable: boolean = false) {
     this._immutable = immutable;
 
-    this.initMetadata(metadata);
+    this._metadata = metadata;
 
     if (props) this.initProps(props);
   }
@@ -52,12 +51,6 @@ export class PropsEnvelope<M extends object, P extends object> {
     if (this.immutable) props = deepFreeze(props);
 
     this.setProps(props);
-  }
-
-  private initMetadata(metadata: M) {
-    const metadataClass = this.getMetadataClass();
-
-    this._metadata = plainToInstance(metadataClass, metadata);
   }
 
   @ToObject()
@@ -86,12 +79,6 @@ export class PropsEnvelope<M extends object, P extends object> {
     const propsClass = this.getPropsClass();
 
     return getPropsOptions(propsClass.prototype);
-  }
-
-  getMetadataClass() {
-    const prototype = Object.getPrototypeOf(this);
-
-    return getMetadataClass(prototype);
   }
 
   transformProps(props: P) {
