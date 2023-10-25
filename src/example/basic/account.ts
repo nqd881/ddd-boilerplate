@@ -21,7 +21,7 @@ export type CreateAccountProps = Omit<AccountProps, 'status'>;
 @Aggregate(AccountProps)
 export class Account extends AggregateBase<AccountProps> {
   static create(props: CreateAccountProps) {
-    const newAccount = this.initAggregate({
+    const newAccount = this.newAggregate({
       ...props,
       status: AccountStatus.ActivatePending,
     });
